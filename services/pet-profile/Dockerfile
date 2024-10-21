@@ -23,8 +23,10 @@ COPY --from=builder /build/petprofile .
 
 ENV GIN_MODE=release
 
-RUN adduser --no-create-home --disabled-password www-data
-RUN chown -R www-data:www-data /app
+RUN adduser --no-create-home --disabled-password docker
+RUN chown -R docker:docker /app
+
+USER docker
 
 EXPOSE 8080
 
