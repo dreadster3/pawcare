@@ -3,7 +3,7 @@ module github.com/dreadster3/pawcare/services/pet-profile
 go 1.23.2
 
 require (
-	github.com/dreadster3/gohealth v1.0.1-0.20241020160237-59818c812000
+	github.com/dreadster3/gohealth v1.0.1
 	github.com/gin-gonic/gin v1.10.0
 	github.com/google/uuid v1.6.0
 	github.com/joho/godotenv v1.5.1
