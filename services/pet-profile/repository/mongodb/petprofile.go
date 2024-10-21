@@ -28,7 +28,13 @@ func (r *PetProfileRepository) FindAll() ([]models.PetProfile, error) {
 	}
 
 	var result []models.PetProfile
-	cursor.All(ctx, &result)
+	if err = cursor.All(ctx, &result); err != nil {
+		return nil, err
+	}
+
+	if len(result) == 0 {
+		return []models.PetProfile{}, nil
+	}
 
 	return result, nil
 }
