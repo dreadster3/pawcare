@@ -6,13 +6,7 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8000:8080"
-    environment:
-      DB_NAME: profiles
-      DB_HOST: db
-      DB_PORT: 27017
-      DB_USER: user
-      DB_PASSWORD: password
-      JWT_SECRET: jwt_secret
+    env_file: .env
 
   db:
     image: mongo:latest
