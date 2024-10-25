@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/dreadster3/pawcare/services/profile/logger"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -47,6 +48,7 @@ func createClient(ctx context.Context, clientOptions *options.ClientOptions) (*m
 func ConnectDB(ctx context.Context) (*mongo.Database, DbCloseFunc, error) {
 	clientOptions := clientOptions()
 
+	logger.Logger.Debug("Connecting to database")
 	client, err := createClient(ctx, clientOptions)
 	if err != nil {
 		return nil, func(ctx context.Context) error { return nil }, err
@@ -57,5 +59,10 @@ func ConnectDB(ctx context.Context) (*mongo.Database, DbCloseFunc, error) {
 		dbName = "profiles"
 	}
 
-	return client.Database(dbName), client.Disconnect, nil
+	disconnect := func(ctx context.Context) error {
+		logger.Logger.Debug("Disconnecting from database")
+		return client.Disconnect(ctx)
+	}
+
+	return client.Database(dbName), disconnect, nil
 }

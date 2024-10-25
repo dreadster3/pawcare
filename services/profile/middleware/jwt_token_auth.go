@@ -10,13 +10,13 @@ import (
 )
 
 var (
-	NotAuthorized = errors.New("not authorized")
+	ErrNotAuthorized = errors.New("not authorized")
 )
 
 func getTokenFromCookie(c *gin.Context) (string, error) {
 	cookie, err := c.Cookie("access_token")
 	if err != nil {
-		return "", NotAuthorized
+		return "", ErrNotAuthorized
 	}
 
 	return cookie, nil
@@ -26,11 +26,11 @@ func getTokenFromHeader(c *gin.Context) (string, error) {
 	authorization := c.GetHeader("Authorization")
 
 	if authorization == "" {
-		return "", NotAuthorized
+		return "", ErrNotAuthorized
 	}
 
 	if !strings.HasPrefix(authorization, "Bearer ") {
-		return "", NotAuthorized
+		return "", ErrNotAuthorized
 	}
 
 	return strings.TrimPrefix(authorization, "Bearer "), nil
@@ -47,15 +47,20 @@ func JwtAuth(env *env.Environment) gin.HandlerFunc {
 			}
 		}
 
-		claims, err := env.Services.Auth.VerifyToken(token)
+		jwtToken, err := env.Services.Auth.VerifyToken(token)
 		if err != nil {
-			c.AbortWithStatusJSON(401, models.NewErrorResponse(c, NotAuthorized))
+			c.AbortWithStatusJSON(401, models.NewErrorResponse(c, ErrNotAuthorized))
 			return
 		}
 
-		userId, err := claims.Claims.GetSubject()
+		if !jwtToken.Valid {
+			c.AbortWithStatusJSON(401, models.NewErrorResponse(c, ErrNotAuthorized))
+			return
+		}
+
+		userId, err := jwtToken.Claims.GetSubject()
 		if err != nil {
-			c.AbortWithStatusJSON(401, models.NewErrorResponse(c, NotAuthorized))
+			c.AbortWithStatusJSON(401, models.NewErrorResponse(c, ErrNotAuthorized))
 			return
 		}
 

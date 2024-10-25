@@ -3,7 +3,6 @@ package mongodb
 import (
 	"context"
 
-	"github.com/dreadster3/pawcare/services/profile/db"
 	"github.com/dreadster3/pawcare/services/profile/models"
 	"github.com/dreadster3/pawcare/services/profile/repository"
 	"go.mongodb.org/mongo-driver/bson"
@@ -11,22 +10,19 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-type OwnerRepository struct{}
+type OwnerRepository struct {
+	db *mongo.Database
+}
 
-func NewOwnerRepository() *OwnerRepository {
-	return &OwnerRepository{}
+func NewOwnerRepository(db *mongo.Database) *OwnerRepository {
+	return &OwnerRepository{db}
 }
 
 func (r *OwnerRepository) FindByUserId(userId string) (*models.Owner, error) {
 	ctx := context.Background()
-	database, disconnect, err := db.ConnectDB(ctx)
-	defer disconnect(ctx)
-	if err != nil {
-		return nil, err
-	}
 
 	var result models.Owner
-	err = database.Collection(OWNER_COLLECTION).FindOne(ctx, bson.M{"user_id": userId}).Decode(&result)
+	err := r.db.Collection(OWNER_COLLECTION).FindOne(ctx, bson.M{"user_id": userId}).Decode(&result)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			return nil, repository.ErrNotFound
@@ -40,14 +36,9 @@ func (r *OwnerRepository) FindByUserId(userId string) (*models.Owner, error) {
 
 func (r *OwnerRepository) Create(owner models.Owner) (*models.Owner, error) {
 	ctx := context.Background()
-	database, disconnect, err := db.ConnectDB(ctx)
-	defer disconnect(ctx)
-	if err != nil {
-		return nil, err
-	}
 
 	owner.Id = primitive.NewObjectID()
-	result, err := database.Collection(OWNER_COLLECTION).InsertOne(ctx, owner)
+	result, err := r.db.Collection(OWNER_COLLECTION).InsertOne(ctx, owner)
 	if err != nil {
 		return nil, err
 	}

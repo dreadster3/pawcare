@@ -18,9 +18,7 @@ func EnvWrapper(env *env.Environment, handler HandlerFuncWithEnv) gin.HandlerFun
 	}
 }
 
-func RegisterRoutes(router *gin.RouterGroup) {
-	environment := env.InitEnvironment()
-
+func RegisterRoutes(environment *env.Environment, router *gin.RouterGroup) {
 	apiGroup := router.Group("/api")
 
 	healthcheckGroup := apiGroup.Group("/healthcheck")

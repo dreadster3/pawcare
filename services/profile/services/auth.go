@@ -1,9 +1,14 @@
 package services
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/golang-jwt/jwt/v5"
+)
+
+var (
+	ErrTokenExpired = errors.New("token is expired")
 )
 
 type AuthService struct {
