@@ -1,0 +1,235 @@
+definitions:
+  healthcheck.HealthcheckStatus:
+    enum:
+    - healthy
+    - unhealthy
+    - degraded
+    type: string
+    x-enum-varnames:
+    - HealthcheckStatusHealthy
+    - HealthcheckStatusUnhealthy
+    - HealthcheckStatusDegraded
+  healthcheck.JSONHealthcheckReport:
+    properties:
+      services:
+        additionalProperties:
+          $ref: '#/definitions/healthcheck.HealthcheckStatus'
+        type: object
+      status:
+        $ref: '#/definitions/healthcheck.HealthcheckStatus'
+    type: object
+  models.EGender:
+    enum:
+    - Male
+    - Female
+    type: string
+    x-enum-varnames:
+    - EGenderMale
+    - EGenderFemale
+  models.ErrorResponse:
+    properties:
+      error:
+        type: string
+      request_id:
+        type: string
+    type: object
+  models.Owner:
+    properties:
+      date_of_birth:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      picture:
+        type: string
+    type: object
+  models.Pet:
+    properties:
+      breed:
+        type: string
+      date_of_birth:
+        type: string
+      gender:
+        $ref: '#/definitions/models.EGender'
+      id:
+        type: string
+      name:
+        type: string
+      picture:
+        type: string
+      species:
+        type: string
+      weight:
+        type: number
+    type: object
+info:
+  contact: {}
+paths:
+  /api/healthcheck:
+    get:
+      description: Checks if the internal services used by the service are healthy
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/healthcheck.JSONHealthcheckReport'
+      summary: Endpoint to check if the service is healthy
+      tags:
+      - healthcheck
+  /api/v1/profiles/owners:
+    get:
+      description: Get owner profile
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Owner'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Get owner profile
+      tags:
+      - owner
+    post:
+      consumes:
+      - application/json
+      description: Creates a new owner profile
+      parameters:
+      - description: Owner Profile
+        in: body
+        name: owner_profile
+        required: true
+        schema:
+          $ref: '#/definitions/models.Owner'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Owner'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Create a new owner profile
+      tags:
+      - owner
+  /api/v1/profiles/pets:
+    get:
+      description: Get all pet profiles
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Pet'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Get all pet profiles
+      tags:
+      - pet
+    post:
+      consumes:
+      - application/json
+      description: Creates a new pet profile
+      parameters:
+      - description: Pet Profile
+        in: body
+        name: pet_profile
+        required: true
+        schema:
+          $ref: '#/definitions/models.Pet'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Pet'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Create a new pet profile
+      tags:
+      - pet
+  /api/v1/profiles/pets/{id}:
+    get:
+      description: Get pet profile by ID
+      parameters:
+      - description: Pet Profile ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Pet'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Get pet profile by ID
+      tags:
+      - pet
+swagger: "2.0"
