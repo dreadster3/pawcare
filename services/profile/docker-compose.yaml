@@ -12,6 +12,7 @@ services:
       DB_PORT: 27017
       DB_USER: user
       DB_PASSWORD: password
+      JWT_SECRET: jwt_secret
 
   db:
     image: mongo:latest
