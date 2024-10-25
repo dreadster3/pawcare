@@ -53,11 +53,6 @@ func JwtAuth(env *env.Environment) gin.HandlerFunc {
 			return
 		}
 
-		if !jwtToken.Valid {
-			c.AbortWithStatusJSON(401, models.NewErrorResponse(c, ErrNotAuthorized))
-			return
-		}
-
 		userId, err := jwtToken.Claims.GetSubject()
 		if err != nil {
 			c.AbortWithStatusJSON(401, models.NewErrorResponse(c, ErrNotAuthorized))
