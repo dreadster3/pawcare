@@ -6,7 +6,7 @@ import (
 
 	"github.com/dreadster3/gohealth/pkg/healthcheck"
 	"github.com/dreadster3/pawcare/services/profile/db"
-	"github.com/dreadster3/pawcare/services/profile/logger"
+	"github.com/dreadster3/pawcare/shared/logger"
 )
 
 var HealthcheckService *healthcheck.HealthcheckService

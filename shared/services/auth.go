@@ -7,6 +7,10 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+type IAuthService interface {
+	VerifyToken(token string) (*jwt.Token, error)
+}
+
 var (
 	ErrTokenExpired = errors.New("token is expired")
 )

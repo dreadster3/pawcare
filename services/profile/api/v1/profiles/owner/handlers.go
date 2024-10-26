@@ -4,6 +4,7 @@ import (
 	"github.com/dreadster3/pawcare/services/profile/env"
 	"github.com/dreadster3/pawcare/services/profile/models"
 	"github.com/dreadster3/pawcare/services/profile/services"
+	sharedModels "github.com/dreadster3/pawcare/shared/models"
 	"github.com/gin-gonic/gin"
 )
 
@@ -25,22 +26,22 @@ func Create(env *env.Environment, c *gin.Context) {
 	err := c.ShouldBindJSON(&request)
 	if err != nil {
 		c.Error(err)
-		c.AbortWithStatusJSON(400, models.NewErrorResponse(c, err))
+		c.AbortWithStatusJSON(400, sharedModels.NewErrorResponse(c, err))
 		return
 	}
 
 	userId := c.GetString("user_id")
 	request.UserId = userId
 
-	result, err := env.Services.Owner.Create(request)
+	result, err := env.Services().Owner().Create(request)
 	if err != nil {
 		if err == services.ErrObjectAlreadyExists {
-			c.AbortWithStatusJSON(409, models.NewErrorResponseString(c, "Owner already exists"))
+			c.AbortWithStatusJSON(409, sharedModels.NewErrorResponseString(c, "Owner already exists"))
 			return
 		}
 
 		c.Error(err)
-		c.AbortWithStatusJSON(500, models.NewErrorResponseString(c, "Internal server error"))
+		c.AbortWithStatusJSON(500, sharedModels.NewErrorResponseString(c, "Internal server error"))
 		return
 	}
 
@@ -61,16 +62,16 @@ func Create(env *env.Environment, c *gin.Context) {
 // @Router /api/v1/profiles/owners [get]
 func Get(env *env.Environment, c *gin.Context) {
 	userId := c.GetString("user_id")
-	owner, err := env.Services.Owner.FindByUserId(userId)
+	owner, err := env.Services().Owner().FindByUserId(userId)
 	if err != nil {
 		if err == services.ErrProfileNotFound {
 			c.Error(err)
-			c.AbortWithStatusJSON(404, models.NewErrorResponseString(c, "Owner not found"))
+			c.AbortWithStatusJSON(404, sharedModels.NewErrorResponseString(c, "Owner not found"))
 			return
 		}
 
 		c.Error(err)
-		c.AbortWithStatusJSON(500, models.NewErrorResponseString(c, "Internal server error"))
+		c.AbortWithStatusJSON(500, sharedModels.NewErrorResponseString(c, "Internal server error"))
 		return
 	}
 

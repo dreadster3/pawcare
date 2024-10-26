@@ -4,6 +4,7 @@ import (
 	"github.com/dreadster3/pawcare/services/profile/env"
 	"github.com/dreadster3/pawcare/services/profile/models"
 	"github.com/dreadster3/pawcare/services/profile/services"
+	sharedModels "github.com/dreadster3/pawcare/shared/models"
 	"github.com/gin-gonic/gin"
 )
 
@@ -25,29 +26,29 @@ func Create(env *env.Environment, c *gin.Context) {
 	err := c.ShouldBindJSON(&request)
 	if err != nil {
 		c.Error(err)
-		c.AbortWithStatusJSON(400, models.NewErrorResponse(c, err))
+		c.AbortWithStatusJSON(400, sharedModels.NewErrorResponse(c, err))
 		return
 	}
 
 	userId := c.GetString("user_id")
-	owner, err := env.Services.Owner.FindByUserId(userId)
+	owner, err := env.Services().Owner().FindByUserId(userId)
 	if err != nil {
 		if err == services.ErrProfileNotFound {
 			c.Error(err)
-			c.AbortWithStatusJSON(404, models.NewErrorResponseString(c, "Owner not found"))
+			c.AbortWithStatusJSON(404, sharedModels.NewErrorResponseString(c, "Owner not found"))
 			return
 		}
 
 		c.Error(err)
-		c.AbortWithStatusJSON(500, models.NewErrorResponseString(c, "Internal server error"))
+		c.AbortWithStatusJSON(500, sharedModels.NewErrorResponseString(c, "Internal server error"))
 		return
 	}
 
 	request.OwnerId = owner.Id.Hex()
-	result, err := env.Services.Pet.Create(request)
+	result, err := env.Services().Pet().Create(request)
 	if err != nil {
 		c.Error(err)
-		c.AbortWithStatusJSON(500, models.NewErrorResponseString(c, "Internal server error"))
+		c.AbortWithStatusJSON(500, sharedModels.NewErrorResponseString(c, "Internal server error"))
 		return
 	}
 
@@ -66,23 +67,23 @@ func Create(env *env.Environment, c *gin.Context) {
 // @Router /api/v1/profiles/pets [get]
 func GetAll(env *env.Environment, c *gin.Context) {
 	userId := c.GetString("user_id")
-	owner, err := env.Services.Owner.FindByUserId(userId)
+	owner, err := env.Services().Owner().FindByUserId(userId)
 	if err != nil {
 		if err == services.ErrProfileNotFound {
 			c.Error(err)
-			c.AbortWithStatusJSON(404, models.NewErrorResponseString(c, "Owner not found"))
+			c.AbortWithStatusJSON(404, sharedModels.NewErrorResponseString(c, "Owner not found"))
 			return
 		}
 
 		c.Error(err)
-		c.AbortWithStatusJSON(500, models.NewErrorResponseString(c, "Internal server error"))
+		c.AbortWithStatusJSON(500, sharedModels.NewErrorResponseString(c, "Internal server error"))
 		return
 	}
 
-	result, err := env.Services.Pet.FindByOwnerId(owner.Id.Hex())
+	result, err := env.Services().Pet().FindByOwnerId(owner.Id.Hex())
 	if err != nil {
 		c.Error(err)
-		c.AbortWithStatusJSON(500, models.NewErrorResponseString(c, "Internal server error"))
+		c.AbortWithStatusJSON(500, sharedModels.NewErrorResponseString(c, "Internal server error"))
 		return
 	}
 
@@ -105,40 +106,40 @@ func GetAll(env *env.Environment, c *gin.Context) {
 func GetById(env *env.Environment, c *gin.Context) {
 	id := c.Param("id")
 	if id == "" {
-		c.AbortWithStatusJSON(400, models.NewErrorResponseString(c, "Id is required"))
+		c.AbortWithStatusJSON(400, sharedModels.NewErrorResponseString(c, "Id is required"))
 		return
 	}
 
 	userId := c.GetString("user_id")
-	owner, err := env.Services.Owner.FindByUserId(userId)
+	owner, err := env.Services().Owner().FindByUserId(userId)
 	if err != nil {
 		if err == services.ErrProfileNotFound {
 			c.Error(err)
-			c.AbortWithStatusJSON(404, models.NewErrorResponseString(c, "Owner not found"))
+			c.AbortWithStatusJSON(404, sharedModels.NewErrorResponseString(c, "Owner not found"))
 			return
 		}
 
 		c.Error(err)
-		c.AbortWithStatusJSON(500, models.NewErrorResponseString(c, "Internal server error"))
+		c.AbortWithStatusJSON(500, sharedModels.NewErrorResponseString(c, "Internal server error"))
 		return
 	}
 
-	result, err := env.Services.Pet.FindByIdAndOwnerId(id, owner.Id.Hex())
+	result, err := env.Services().Pet().FindByIdAndOwnerId(id, owner.Id.Hex())
 	if err != nil {
 		if err == services.ErrInvalidId {
 			c.Error(err)
-			c.AbortWithStatusJSON(400, models.NewErrorResponseString(c, "Invalid ID"))
+			c.AbortWithStatusJSON(400, sharedModels.NewErrorResponseString(c, "Invalid ID"))
 			return
 		}
 
 		if err == services.ErrProfileNotFound {
 			c.Error(err)
-			c.AbortWithStatusJSON(404, models.NewErrorResponseString(c, "Profile not found"))
+			c.AbortWithStatusJSON(404, sharedModels.NewErrorResponseString(c, "Profile not found"))
 			return
 		}
 
 		c.Error(err)
-		c.AbortWithStatusJSON(500, models.NewErrorResponseString(c, "Internal server error"))
+		c.AbortWithStatusJSON(500, sharedModels.NewErrorResponseString(c, "Internal server error"))
 		return
 	}
 

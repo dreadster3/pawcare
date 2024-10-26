@@ -4,8 +4,8 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/dreadster3/pawcare/services/profile/env"
-	"github.com/dreadster3/pawcare/services/profile/models"
+	"github.com/dreadster3/pawcare/shared/env"
+	"github.com/dreadster3/pawcare/shared/models"
 	"github.com/gin-gonic/gin"
 )
 
@@ -36,7 +36,7 @@ func getTokenFromHeader(c *gin.Context) (string, error) {
 	return strings.TrimPrefix(authorization, "Bearer "), nil
 }
 
-func JwtAuth(env *env.Environment) gin.HandlerFunc {
+func JwtAuth[T env.IServiceContainer, E env.IEnvironment[T]](env E) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		token, err := getTokenFromHeader(c)
 		if err != nil {
@@ -47,7 +47,7 @@ func JwtAuth(env *env.Environment) gin.HandlerFunc {
 			}
 		}
 
-		jwtToken, err := env.Services.Auth.VerifyToken(token)
+		jwtToken, err := env.Services().Auth().VerifyToken(token)
 		if err != nil {
 			c.AbortWithStatusJSON(401, models.NewErrorResponse(c, ErrNotAuthorized))
 			return
