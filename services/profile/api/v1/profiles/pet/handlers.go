@@ -17,9 +17,9 @@ import (
 // @Param pet_profile body models.Pet true "Pet Profile"
 // @Produce json
 // @Success 201 {object} models.Pet
-// @Failure 400 {object} models.ErrorResponse
-// @Failure 401 {object} models.ErrorResponse
-// @Failure 500 {object} models.ErrorResponse
+// @Failure 400 {object} sharedModels.ErrorResponse
+// @Failure 401 {object} sharedModels.ErrorResponse
+// @Failure 500 {object} sharedModels.ErrorResponse
 // @Router /api/v1/profiles/pets [post]
 func Create(env *env.Environment, c *gin.Context) {
 	var request models.Pet
@@ -62,8 +62,8 @@ func Create(env *env.Environment, c *gin.Context) {
 // @Tags pet
 // @Produce json
 // @Success 200 {array} models.Pet
-// @Failure 401 {object} models.ErrorResponse
-// @Failure 500 {object} models.ErrorResponse
+// @Failure 401 {object} sharedModels.ErrorResponse
+// @Failure 500 {object} sharedModels.ErrorResponse
 // @Router /api/v1/profiles/pets [get]
 func GetAll(env *env.Environment, c *gin.Context) {
 	userId := c.GetString("user_id")
@@ -98,10 +98,10 @@ func GetAll(env *env.Environment, c *gin.Context) {
 // @Param id path string true "Pet Profile ID"
 // @Produce json
 // @Success 200 {object} models.Pet
-// @Failure 400 {object} models.ErrorResponse
-// @Failure 401 {object} models.ErrorResponse
-// @Failure 404 {object} models.ErrorResponse
-// @Failure 500 {object} models.ErrorResponse
+// @Failure 400 {object} sharedModels.ErrorResponse
+// @Failure 401 {object} sharedModels.ErrorResponse
+// @Failure 404 {object} sharedModels.ErrorResponse
+// @Failure 500 {object} sharedModels.ErrorResponse
 // @Router /api/v1/profiles/pets/{id} [get]
 func GetById(env *env.Environment, c *gin.Context) {
 	id := c.Param("id")

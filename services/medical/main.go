@@ -5,9 +5,9 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/dreadster3/pawcare/services/profile/api"
-	"github.com/dreadster3/pawcare/services/profile/db"
-	"github.com/dreadster3/pawcare/services/profile/env"
+	"github.com/dreadster3/pawcare/services/medical/api"
+	"github.com/dreadster3/pawcare/services/medical/db"
+	"github.com/dreadster3/pawcare/services/medical/env"
 	"github.com/dreadster3/pawcare/shared/logger"
 	"github.com/dreadster3/pawcare/shared/server"
 	"github.com/joho/godotenv"
