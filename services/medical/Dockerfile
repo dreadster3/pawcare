@@ -13,13 +13,13 @@ RUN go mod download
 # Copy the source code
 COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux go build -o profile 
+RUN CGO_ENABLED=0 GOOS=linux go build -o medical
 
 FROM alpine:latest AS runtime
 
 WORKDIR /app
 
-COPY --from=builder /build/profile .
+COPY --from=builder /build/medical .
 
 ENV GIN_MODE=release
 
@@ -30,5 +30,5 @@ USER docker
 
 EXPOSE 8080
 
-CMD ["./profile"]
+CMD ["./medical"]
 

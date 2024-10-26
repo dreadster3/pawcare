@@ -1,12 +1,12 @@
-# Profile Management Service
+# Medical Records Service
 
 ## Description
 
-The Profile Management Service is responsible for managing user profiles within the PawCare application. It handles operations such as creating, updating, retrieving, and deleting user profiles. This service ensures that user data is stored securely and can be accessed efficiently.
+The Medical Records Service is responsible for managing user profiles within the PawCare application. It handles operations such as creating, updating, retrieving, and deleting user profiles. This service ensures that user data is stored securely and can be accessed efficiently.
 
 ## Environment Variables
 
-The following environment variables are used to configure the Profile Management Service:
+The following environment variables are used to configure the Medical Records Service:
 
 - `DB_HOST`: The hostname of the database server.
 - `DB_PORT`: The port number of the database server.
@@ -18,7 +18,7 @@ The following environment variables are used to configure the Profile Management
 
 ## Getting Started
 
-To run the Profile Management Service locally using Docker Compose, follow these steps:
+To run the Medical Records Service locally using Docker Compose, follow these steps:
 
 1. Clone the repository:
 
@@ -42,11 +42,11 @@ To run the Profile Management Service locally using Docker Compose, follow these
    docker-compose up -d
    ```
 
-This will build and start the Profile Management Service along with any other services defined in the `docker-compose.yaml` file.
+This will build and start the Medical Records Service along with any other services defined in the `docker-compose.yaml` file.
 
 ## Contributing
 
-If you would like to contribute to the Profile Management Service, please follow these steps:
+If you would like to contribute to the Medical Records Service, please follow these steps:
 
 1. Fork the repository.
 2. Create a new branch for your feature or bugfix.
