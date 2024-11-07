@@ -1,3 +1,4 @@
+//go:generate swag init -g main.go -o ./docs -parseDependency -parseInternal
 package main
 
 import (
@@ -6,34 +7,36 @@ import (
 	"syscall"
 
 	"github.com/dreadster3/pawcare/services/profile/api"
-	"github.com/dreadster3/pawcare/services/profile/db"
-	"github.com/dreadster3/pawcare/services/profile/env"
+	_ "github.com/dreadster3/pawcare/services/profile/docs"
+	"github.com/dreadster3/pawcare/shared/db/mongodb"
 	"github.com/dreadster3/pawcare/shared/logger"
 	"github.com/dreadster3/pawcare/shared/server"
-	"github.com/joho/godotenv"
 )
 
+// @title           Profile Service
+// @version         1.0
+// @description     Service for managing pet and owner profiles
+
+// @securityDefinitions.apikey JWT
+// @in header
+// @name Authorization
 func _main() error {
-	godotenv.Load()
+	viper := server.SetupServer()
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	db, disconnect, err := db.ConnectDB(ctx)
+	db, disconnect, err := mongodb.ConnectDB(ctx, viper)
 	defer disconnect(ctx)
 	if err != nil {
 		return err
 	}
 
-	environment := env.InitEnvironment(db)
-
 	engine := server.NewDefaultEngine()
 
-	api.RegisterRoutes(environment, &engine.RouterGroup)
+	api.RegisterRoutes(viper, db, &engine.RouterGroup)
 
-	server.RunServer(ctx, engine)
-
-	return nil
+	return server.RunServer(ctx, viper, engine)
 }
 
 func main() {

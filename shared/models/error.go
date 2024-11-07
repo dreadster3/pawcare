@@ -27,6 +27,10 @@ func NewErrorResponseString(ctx *gin.Context, err string) errorResponse {
 	return NewErrorResponse(ctx, errors.New(err))
 }
 
+func NewInternalErrorResponse(ctx *gin.Context) errorResponse {
+	return NewErrorResponseString(ctx, "Internal Server Error")
+}
+
 func (e errorResponse) MarshalJSON() ([]byte, error) {
 	rsp := ErrorResponse{
 		Error:     e.error.Error(),

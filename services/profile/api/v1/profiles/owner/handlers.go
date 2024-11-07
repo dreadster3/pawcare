@@ -9,12 +9,13 @@ import (
 )
 
 // Create godoc
+// @Security JWT
 // @Summary Create a new owner profile
 // @Schemes
 // @Description Creates a new owner profile
 // @Tags owner
 // @Accept json
-// @Param owner_profile body models.Owner true "Owner Profile"
+// @Param request body models.Owner true "Owner Profile"
 // @Produce json
 // @Success 201 {object} models.Owner
 // @Failure 400 {object} sharedModels.ErrorResponse
@@ -49,6 +50,7 @@ func Create(env *env.Environment, c *gin.Context) {
 }
 
 // GetById godoc
+// @Security JWT
 // @Summary Get owner profile
 // @Schemes
 // @Description Get owner profile

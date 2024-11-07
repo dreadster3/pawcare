@@ -3,31 +3,23 @@ package mongodb
 import (
 	"context"
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/dreadster3/pawcare/shared/logger"
+	"github.com/spf13/viper"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type DbCloseFunc func(context.Context) error
 
-func clientOptions() *options.ClientOptions {
-	user := os.Getenv("DB_USER")
-	password := os.Getenv("DB_PASSWORD")
+func clientOptions(viper *viper.Viper) *options.ClientOptions {
+	user := viper.GetString("db_user")
+	password := viper.GetString("db_password")
+	host := viper.GetString("db_host")
+	port := viper.GetInt("db_port")
 
-	host := os.Getenv("DB_HOST")
-	if host == "" {
-		host = "localhost"
-	}
-
-	port := os.Getenv("DB_PORT")
-	if port == "" {
-		port = "27017"
-	}
-
-	connectionString := fmt.Sprintf("mongodb://%s:%s@%s:%s", user, password, host, port)
+	connectionString := fmt.Sprintf("mongodb://%s:%s@%s:%d", user, password, host, port)
 	clientOptions := options.Client().ApplyURI(connectionString)
 
 	return clientOptions
@@ -45,8 +37,8 @@ func createClient(ctx context.Context, clientOptions *options.ClientOptions) (*m
 	return client, nil
 }
 
-func ConnectDB(ctx context.Context, databaseName string) (*mongo.Database, DbCloseFunc, error) {
-	clientOptions := clientOptions()
+func ConnectDB(ctx context.Context, viper *viper.Viper) (*mongo.Database, DbCloseFunc, error) {
+	clientOptions := clientOptions(viper)
 
 	logger.Logger.Debug("Connecting to database")
 	client, err := createClient(ctx, clientOptions)
@@ -59,5 +51,5 @@ func ConnectDB(ctx context.Context, databaseName string) (*mongo.Database, DbClo
 		return client.Disconnect(ctx)
 	}
 
-	return client.Database(databaseName), disconnect, nil
+	return client.Database(viper.GetString("db_name")), disconnect, nil
 }

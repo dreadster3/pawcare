@@ -1,31 +1,19 @@
 {
     "swagger": "2.0",
     "info": {
-        "contact": {}
+        "description": "Service for managing pet and owner profiles",
+        "title": "Profile Service",
+        "contact": {},
+        "version": "1.0"
     },
     "paths": {
-        "/api/healthcheck": {
-            "get": {
-                "description": "Checks if the internal services used by the service are healthy",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "healthcheck"
-                ],
-                "summary": "Endpoint to check if the service is healthy",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/healthcheck.JSONHealthcheckReport"
-                        }
-                    }
-                }
-            }
-        },
         "/api/v1/profiles/owners": {
             "get": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
                 "description": "Get owner profile",
                 "produces": [
                     "application/json"
@@ -68,6 +56,11 @@
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
                 "description": "Creates a new owner profile",
                 "consumes": [
                     "application/json"
@@ -82,7 +75,7 @@
                 "parameters": [
                     {
                         "description": "Owner Profile",
-                        "name": "owner_profile",
+                        "name": "request",
                         "in": "body",
                         "required": true,
                         "schema": {
@@ -120,6 +113,11 @@
         },
         "/api/v1/profiles/pets": {
             "get": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
                 "description": "Get all pet profiles",
                 "produces": [
                     "application/json"
@@ -153,6 +151,11 @@
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
                 "description": "Creates a new pet profile",
                 "consumes": [
                     "application/json"
@@ -167,7 +170,7 @@
                 "parameters": [
                     {
                         "description": "Pet Profile",
-                        "name": "pet_profile",
+                        "name": "body",
                         "in": "body",
                         "required": true,
                         "schema": {
@@ -205,6 +208,11 @@
         },
         "/api/v1/profiles/pets/{id}": {
             "get": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
                 "description": "Get pet profile by ID",
                 "produces": [
                     "application/json"
@@ -227,12 +235,6 @@
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/models.Pet"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/models.ErrorResponse"
                         }
                     },
                     "401": {
@@ -258,33 +260,6 @@
         }
     },
     "definitions": {
-        "healthcheck.HealthcheckStatus": {
-            "type": "string",
-            "enum": [
-                "healthy",
-                "unhealthy",
-                "degraded"
-            ],
-            "x-enum-varnames": [
-                "HealthcheckStatusHealthy",
-                "HealthcheckStatusUnhealthy",
-                "HealthcheckStatusDegraded"
-            ]
-        },
-        "healthcheck.JSONHealthcheckReport": {
-            "type": "object",
-            "properties": {
-                "services": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "$ref": "#/definitions/healthcheck.HealthcheckStatus"
-                    }
-                },
-                "status": {
-                    "$ref": "#/definitions/healthcheck.HealthcheckStatus"
-                }
-            }
-        },
         "models.EGender": {
             "type": "string",
             "enum": [
@@ -352,6 +327,13 @@
                     "type": "number"
                 }
             }
+        }
+    },
+    "securityDefinitions": {
+        "JWT": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
         }
     }
 }

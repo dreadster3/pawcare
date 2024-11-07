@@ -6,9 +6,11 @@ import (
 )
 
 type ServiceContainer struct {
-	auth  *sharedServices.AuthService
 	pet   *services.PetService
 	owner *services.OwnerService
+
+	auth        sharedServices.IAuthService
+	healthcheck sharedServices.IHealthcheckService
 }
 
 func (c *ServiceContainer) Auth() sharedServices.IAuthService {
@@ -21,4 +23,8 @@ func (c *ServiceContainer) Pet() *services.PetService {
 
 func (c *ServiceContainer) Owner() *services.OwnerService {
 	return c.owner
+}
+
+func (c *ServiceContainer) Healthcheck() sharedServices.IHealthcheckService {
+	return c.healthcheck
 }

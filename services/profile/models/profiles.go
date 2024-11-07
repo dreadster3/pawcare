@@ -9,7 +9,7 @@ type Pet struct {
 	OwnerId     string             `json:"-" bson:"owner_id" swaggerignore:"true"`
 	Name        string             `json:"name" bson:"name"`
 	DateOfBirth primitive.DateTime `json:"date_of_birth" bson:"date_of_birth"`
-	Picture     primitive.Binary   `json:"picture" bson:"picture"`
+	Picture     string             `json:"picture" bson:"picture"`
 	Species     string             `json:"species" bson:"species"`
 	Breed       string             `json:"breed" bson:"breed"`
 	Weight      float64            `json:"weight" bson:"weight"`
@@ -21,5 +21,5 @@ type Owner struct {
 	UserId      string             `json:"-" bson:"user_id" swaggerignore:"true"`
 	Name        string             `json:"name" bson:"name"`
 	DateOfBirth primitive.DateTime `json:"date_of_birth" bson:"date_of_birth"`
-	Picture     primitive.Binary   `json:"picture" bson:"picture"`
+	Picture     string             `json:"picture" bson:"picture"`
 }

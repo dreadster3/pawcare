@@ -9,12 +9,12 @@ import (
 )
 
 // Create godoc
+// @Security JWT
 // @Summary Create a new pet profile
-// @Schemes
 // @Description Creates a new pet profile
 // @Tags pet
 // @Accept json
-// @Param pet_profile body models.Pet true "Pet Profile"
+// @Param body body models.Pet true "Pet Profile"
 // @Produce json
 // @Success 201 {object} models.Pet
 // @Failure 400 {object} sharedModels.ErrorResponse
@@ -56,8 +56,8 @@ func Create(env *env.Environment, c *gin.Context) {
 }
 
 // GetAll godoc
+// @Security JWT
 // @Summary Get all pet profiles
-// @Schemes
 // @Description Get all pet profiles
 // @Tags pet
 // @Produce json
@@ -66,6 +66,7 @@ func Create(env *env.Environment, c *gin.Context) {
 // @Failure 500 {object} sharedModels.ErrorResponse
 // @Router /api/v1/profiles/pets [get]
 func GetAll(env *env.Environment, c *gin.Context) {
+
 	userId := c.GetString("user_id")
 	owner, err := env.Services().Owner().FindByUserId(userId)
 	if err != nil {
@@ -91,24 +92,19 @@ func GetAll(env *env.Environment, c *gin.Context) {
 }
 
 // GetById godoc
+// @Security JWT
 // @Summary Get pet profile by ID
-// @Schemes
 // @Description Get pet profile by ID
 // @Tags pet
 // @Param id path string true "Pet Profile ID"
 // @Produce json
 // @Success 200 {object} models.Pet
-// @Failure 400 {object} sharedModels.ErrorResponse
 // @Failure 401 {object} sharedModels.ErrorResponse
 // @Failure 404 {object} sharedModels.ErrorResponse
 // @Failure 500 {object} sharedModels.ErrorResponse
 // @Router /api/v1/profiles/pets/{id} [get]
 func GetById(env *env.Environment, c *gin.Context) {
 	id := c.Param("id")
-	if id == "" {
-		c.AbortWithStatusJSON(400, sharedModels.NewErrorResponseString(c, "Id is required"))
-		return
-	}
 
 	userId := c.GetString("user_id")
 	owner, err := env.Services().Owner().FindByUserId(userId)

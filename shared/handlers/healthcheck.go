@@ -1,8 +1,7 @@
-package healthcheck
+package handlers
 
 import (
-	"github.com/dreadster3/pawcare/services/medical/env"
-	"github.com/dreadster3/pawcare/services/medical/services"
+	"github.com/dreadster3/pawcare/shared/env"
 	"github.com/gin-gonic/gin"
 )
 
@@ -14,8 +13,8 @@ import (
 // @Produce json
 // @Success 200 {object} healthcheck.JSONHealthcheckReport
 // @Router /api/healthcheck [get]
-func HealthcheckGet(env *env.Environment, c *gin.Context) {
-	report := services.HealthcheckService.Run(c.Request.Context())
+func HealthcheckHandler[T env.IServiceContainer, E env.IEnvironment[T]](env E, c *gin.Context) {
+	report := env.Services().Healthcheck().Run(c)
 
 	c.JSON(200, report)
 }

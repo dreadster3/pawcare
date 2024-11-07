@@ -8,6 +8,7 @@ import (
 
 type IServiceContainer interface {
 	Auth() services.IAuthService
+	Healthcheck() services.IHealthcheckService
 }
 
 type IEnvironment[T IServiceContainer] interface {

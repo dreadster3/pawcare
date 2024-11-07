@@ -6,13 +6,14 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/spf13/viper"
 )
 
 var Logger *slog.Logger
 
-func init() {
+func InitLogging(viper *viper.Viper) {
 	level := slog.LevelInfo
-	switch strings.ToLower(os.Getenv("LOG_LEVEL")) {
+	switch strings.ToLower(viper.GetString("log_level")) {
 	case "debug":
 		level = slog.LevelDebug
 	case "info":
