@@ -4,14 +4,13 @@ FROM golang:${GO_VERSION}-alpine AS builder
 
 WORKDIR /build
 
-# Copy the Go Modules and download the dependencies
-COPY go.mod go.sum ./
+# Copy the source code
+COPY . .
+
+WORKDIR /build/services/profile
 
 # Download the dependencies
 RUN go mod download
-
-# Copy the source code
-COPY . .
 
 RUN CGO_ENABLED=0 GOOS=linux go build -o profile 
 
@@ -19,7 +18,7 @@ FROM alpine:latest AS runtime
 
 WORKDIR /app
 
-COPY --from=builder /build/profile .
+COPY --from=builder /build/services/profile/profile .
 
 ENV GIN_MODE=release
 

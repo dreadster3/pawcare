@@ -2,8 +2,8 @@ name: profile
 services:
   server:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ../../
+      dockerfile: ./services/profile/Dockerfile
     ports:
       - "8000:8080"
     env_file: .env

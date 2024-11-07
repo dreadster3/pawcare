@@ -15,28 +15,13 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/api/healthcheck": {
-            "get": {
-                "description": "Checks if the internal services used by the service are healthy",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "healthcheck"
-                ],
-                "summary": "Endpoint to check if the service is healthy",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/healthcheck.JSONHealthcheckReport"
-                        }
-                    }
-                }
-            }
-        },
         "/api/v1/profiles/owners": {
             "get": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
                 "description": "Get owner profile",
                 "produces": [
                     "application/json"
@@ -79,6 +64,11 @@ const docTemplate = `{
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
                 "description": "Creates a new owner profile",
                 "consumes": [
                     "application/json"
@@ -93,7 +83,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "description": "Owner Profile",
-                        "name": "owner_profile",
+                        "name": "request",
                         "in": "body",
                         "required": true,
                         "schema": {
@@ -131,6 +121,11 @@ const docTemplate = `{
         },
         "/api/v1/profiles/pets": {
             "get": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
                 "description": "Get all pet profiles",
                 "produces": [
                     "application/json"
@@ -164,6 +159,11 @@ const docTemplate = `{
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
                 "description": "Creates a new pet profile",
                 "consumes": [
                     "application/json"
@@ -178,7 +178,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "description": "Pet Profile",
-                        "name": "pet_profile",
+                        "name": "body",
                         "in": "body",
                         "required": true,
                         "schema": {
@@ -216,6 +216,11 @@ const docTemplate = `{
         },
         "/api/v1/profiles/pets/{id}": {
             "get": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
                 "description": "Get pet profile by ID",
                 "produces": [
                     "application/json"
@@ -238,12 +243,6 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/models.Pet"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/models.ErrorResponse"
                         }
                     },
                     "401": {
@@ -269,33 +268,6 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "healthcheck.HealthcheckStatus": {
-            "type": "string",
-            "enum": [
-                "healthy",
-                "unhealthy",
-                "degraded"
-            ],
-            "x-enum-varnames": [
-                "HealthcheckStatusHealthy",
-                "HealthcheckStatusUnhealthy",
-                "HealthcheckStatusDegraded"
-            ]
-        },
-        "healthcheck.JSONHealthcheckReport": {
-            "type": "object",
-            "properties": {
-                "services": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "$ref": "#/definitions/healthcheck.HealthcheckStatus"
-                    }
-                },
-                "status": {
-                    "$ref": "#/definitions/healthcheck.HealthcheckStatus"
-                }
-            }
-        },
         "models.EGender": {
             "type": "string",
             "enum": [
@@ -364,17 +336,24 @@ const docTemplate = `{
                 }
             }
         }
+    },
+    "securityDefinitions": {
+        "JWT": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
     }
 }`
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "",
+	Version:          "1.0",
 	Host:             "",
 	BasePath:         "",
 	Schemes:          []string{},
-	Title:            "",
-	Description:      "",
+	Title:            "Profile Service",
+	Description:      "Service for managing pet and owner profiles",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

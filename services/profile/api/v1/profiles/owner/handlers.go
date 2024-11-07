@@ -4,43 +4,45 @@ import (
 	"github.com/dreadster3/pawcare/services/profile/env"
 	"github.com/dreadster3/pawcare/services/profile/models"
 	"github.com/dreadster3/pawcare/services/profile/services"
+	sharedModels "github.com/dreadster3/pawcare/shared/models"
 	"github.com/gin-gonic/gin"
 )
 
 // Create godoc
+// @Security JWT
 // @Summary Create a new owner profile
 // @Schemes
 // @Description Creates a new owner profile
 // @Tags owner
 // @Accept json
-// @Param owner_profile body models.Owner true "Owner Profile"
+// @Param request body models.Owner true "Owner Profile"
 // @Produce json
 // @Success 201 {object} models.Owner
-// @Failure 400 {object} models.ErrorResponse
-// @Failure 401 {object} models.ErrorResponse
-// @Failure 500 {object} models.ErrorResponse
+// @Failure 400 {object} sharedModels.ErrorResponse
+// @Failure 401 {object} sharedModels.ErrorResponse
+// @Failure 500 {object} sharedModels.ErrorResponse
 // @Router /api/v1/profiles/owners [post]
 func Create(env *env.Environment, c *gin.Context) {
 	var request models.Owner
 	err := c.ShouldBindJSON(&request)
 	if err != nil {
 		c.Error(err)
-		c.AbortWithStatusJSON(400, models.NewErrorResponse(c, err))
+		c.AbortWithStatusJSON(400, sharedModels.NewErrorResponse(c, err))
 		return
 	}
 
 	userId := c.GetString("user_id")
 	request.UserId = userId
 
-	result, err := env.Services.Owner.Create(request)
+	result, err := env.Services().Owner().Create(request)
 	if err != nil {
 		if err == services.ErrObjectAlreadyExists {
-			c.AbortWithStatusJSON(409, models.NewErrorResponseString(c, "Owner already exists"))
+			c.AbortWithStatusJSON(409, sharedModels.NewErrorResponseString(c, "Owner already exists"))
 			return
 		}
 
 		c.Error(err)
-		c.AbortWithStatusJSON(500, models.NewErrorResponseString(c, "Internal server error"))
+		c.AbortWithStatusJSON(500, sharedModels.NewErrorResponseString(c, "Internal server error"))
 		return
 	}
 
@@ -48,29 +50,30 @@ func Create(env *env.Environment, c *gin.Context) {
 }
 
 // GetById godoc
+// @Security JWT
 // @Summary Get owner profile
 // @Schemes
 // @Description Get owner profile
 // @Tags owner
 // @Produce json
 // @Success 200 {object} models.Owner
-// @Failure 400 {object} models.ErrorResponse
-// @Failure 401 {object} models.ErrorResponse
-// @Failure 404 {object} models.ErrorResponse
-// @Failure 500 {object} models.ErrorResponse
+// @Failure 400 {object} sharedModels.ErrorResponse
+// @Failure 401 {object} sharedModels.ErrorResponse
+// @Failure 404 {object} sharedModels.ErrorResponse
+// @Failure 500 {object} sharedModels.ErrorResponse
 // @Router /api/v1/profiles/owners [get]
 func Get(env *env.Environment, c *gin.Context) {
 	userId := c.GetString("user_id")
-	owner, err := env.Services.Owner.FindByUserId(userId)
+	owner, err := env.Services().Owner().FindByUserId(userId)
 	if err != nil {
 		if err == services.ErrProfileNotFound {
 			c.Error(err)
-			c.AbortWithStatusJSON(404, models.NewErrorResponseString(c, "Owner not found"))
+			c.AbortWithStatusJSON(404, sharedModels.NewErrorResponseString(c, "Owner not found"))
 			return
 		}
 
 		c.Error(err)
-		c.AbortWithStatusJSON(500, models.NewErrorResponseString(c, "Internal server error"))
+		c.AbortWithStatusJSON(500, sharedModels.NewErrorResponseString(c, "Internal server error"))
 		return
 	}
 

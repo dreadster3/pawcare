@@ -1,23 +1,4 @@
 definitions:
-  healthcheck.HealthcheckStatus:
-    enum:
-    - healthy
-    - unhealthy
-    - degraded
-    type: string
-    x-enum-varnames:
-    - HealthcheckStatusHealthy
-    - HealthcheckStatusUnhealthy
-    - HealthcheckStatusDegraded
-  healthcheck.JSONHealthcheckReport:
-    properties:
-      services:
-        additionalProperties:
-          $ref: '#/definitions/healthcheck.HealthcheckStatus'
-        type: object
-      status:
-        $ref: '#/definitions/healthcheck.HealthcheckStatus'
-    type: object
   models.EGender:
     enum:
     - Male
@@ -65,20 +46,10 @@ definitions:
     type: object
 info:
   contact: {}
+  description: Service for managing pet and owner profiles
+  title: Profile Service
+  version: "1.0"
 paths:
-  /api/healthcheck:
-    get:
-      description: Checks if the internal services used by the service are healthy
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/healthcheck.JSONHealthcheckReport'
-      summary: Endpoint to check if the service is healthy
-      tags:
-      - healthcheck
   /api/v1/profiles/owners:
     get:
       description: Get owner profile
@@ -105,6 +76,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - JWT: []
       summary: Get owner profile
       tags:
       - owner
@@ -115,7 +88,7 @@ paths:
       parameters:
       - description: Owner Profile
         in: body
-        name: owner_profile
+        name: request
         required: true
         schema:
           $ref: '#/definitions/models.Owner'
@@ -138,6 +111,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - JWT: []
       summary: Create a new owner profile
       tags:
       - owner
@@ -161,6 +136,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - JWT: []
       summary: Get all pet profiles
       tags:
       - pet
@@ -171,7 +148,7 @@ paths:
       parameters:
       - description: Pet Profile
         in: body
-        name: pet_profile
+        name: body
         required: true
         schema:
           $ref: '#/definitions/models.Pet'
@@ -194,6 +171,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - JWT: []
       summary: Create a new pet profile
       tags:
       - pet
@@ -213,10 +192,6 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/models.Pet'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/models.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
@@ -229,7 +204,14 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - JWT: []
       summary: Get pet profile by ID
       tags:
       - pet
+securityDefinitions:
+  JWT:
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"

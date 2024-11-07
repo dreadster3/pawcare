@@ -1,0 +1,153 @@
+definitions:
+  models.ErrorResponse:
+    properties:
+      error:
+        type: string
+      request_id:
+        type: string
+    type: object
+  models.Record:
+    properties:
+      date:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      pet_id:
+        type: string
+      type:
+        $ref: '#/definitions/models.RecordType'
+    type: object
+  models.RecordType:
+    enum:
+    - vaccination
+    - treatment
+    - deworming
+    - surgery
+    - checkup
+    - other
+    type: string
+    x-enum-varnames:
+    - RecordTypeVaccination
+    - RecordTypeTreatment
+    - RecordTypeDeworming
+    - RecordTypeSurgery
+    - RecordTypeCheckUp
+    - RecordTypeOther
+info:
+  contact: {}
+  description: Service for managing medical records
+  title: Medical Service
+  version: "1.0"
+paths:
+  /api/v1/pets/:id/records:
+    get:
+      description: Get All Records that belong to a Pet
+      parameters:
+      - description: Pet Id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Record'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - JWT: []
+      summary: Get Records by Pet Id
+      tags:
+      - records
+  /api/v1/records:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new medical record
+      parameters:
+      - description: Record
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.Record'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Record'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - JWT: []
+      summary: Create a new medical
+      tags:
+      - records
+  /api/v1/records/:id:
+    get:
+      description: Get Record with the specified Id
+      parameters:
+      - description: Record Id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Record'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - JWT: []
+      summary: Get Record
+      tags:
+      - records
+securityDefinitions:
+  JWT:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
