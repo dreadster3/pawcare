@@ -22,7 +22,14 @@
         # module parameters provide easy access to attributes of the same
         # system.
         devShells.default = pkgs.mkShell {
-          packages = with pkgs; [ go gopls go-swagger go-swag ];
+          packages = with pkgs; [
+            go
+            gopls
+            go-swagger
+            go-swag
+            protobuf
+            protoc-gen-go
+          ];
         };
 
         # Equivalent to  inputs'.nixpkgs.legacyPackages.hello;

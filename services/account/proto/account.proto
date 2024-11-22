@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package proto;
+
+option go_package = "github.com/dreadster3/pawcare/services/account/proto";
+
+service AccountService {
+  rpc Create(AccountServiceCreateRequest) returns (AccountServiceCreateResponse) {}
+}
+
+message AccountServiceCreateRequest {
+  string name = 1;
+}
+
+message AccountServiceCreateResponse {
+  string id = 1;
+}
