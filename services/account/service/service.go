@@ -20,5 +20,5 @@ func NewProfileService(logger log.Logger) ProfileService {
 }
 
 func (svc *profileService) CreateAccount(name string, dateOfBirth time.Time) (string, error) {
-	return "someId", nil
+	return name, nil
 }
