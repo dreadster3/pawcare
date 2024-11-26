@@ -18,13 +18,14 @@ import (
 	"github.com/dreadster3/pawcare/services/account/proto"
 	"github.com/dreadster3/pawcare/services/account/service"
 	"github.com/dreadster3/pawcare/services/account/transport"
+	"github.com/dreadster3/pawcare/services/auth"
 	"github.com/go-kit/log"
 	kitlog "github.com/go-kit/log"
 )
 
 const (
-	defaultHttpPort = "8080"
-	defaultGrpcPort = "8081"
+	DefaultHttpPort string = "8080"
+	DefaultGrpcPort string = "8081"
 )
 
 func envString(env, fallback string) string {
@@ -51,8 +52,8 @@ func accessControl(h http.Handler) http.Handler {
 
 func _main() error {
 	var (
-		httpPort = envString("HTTP_PORT", defaultHttpPort)
-		grpcPort = envString("GRPC_PORT", defaultGrpcPort)
+		httpPort = envString("HTTP_PORT", DefaultHttpPort)
+		grpcPort = envString("GRPC_PORT", DefaultGrpcPort)
 
 		httpAddr = flag.String("http.addr", ":"+httpPort, "HTTP listen address")
 		grpcAddr = flag.String("grpc.addr", ":"+grpcPort, "gRPC listen address")
@@ -61,10 +62,13 @@ func _main() error {
 	logger := kitlog.NewLogfmtLogger(kitlog.NewSyncWriter(os.Stderr))
 	logger = kitlog.With(logger, "ts", kitlog.DefaultTimestampUTC)
 
-	svc := service.NewProfileService(logger)
-	endpoints := endpoint.NewSet(svc, logger)
+	userService := auth.NewUserService(kitlog.With(logger, "service", "userService"))
+	profileService := service.NewProfileService(userService, kitlog.With(logger, "service", "profileService"))
+	endpoints := endpoint.NewSet(profileService, logger)
 
 	httpHandler := transport.MakeHTTPHandler(endpoints, logger)
+	httpHandler = accessControl(httpHandler)
+
 	grpcHandler := transport.NewGRPCServer(endpoints, logger)
 
 	var g group.Group

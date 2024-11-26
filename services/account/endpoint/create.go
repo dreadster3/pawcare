@@ -6,7 +6,9 @@ import (
 	"time"
 
 	"github.com/dreadster3/pawcare/services/account/service"
+	kitjwt "github.com/go-kit/kit/auth/jwt"
 	"github.com/go-kit/kit/endpoint"
+	"github.com/golang-jwt/jwt/v4"
 
 	"github.com/go-playground/validator/v10"
 )
@@ -20,7 +22,7 @@ type CreateAccountResponse struct {
 	Id string `json:"id"`
 }
 
-func makeCreateOwnerEndpoint(svc service.ProfileService) endpoint.Endpoint {
+func makeCreateOwnerEndpoint(profileService service.IProfileService) endpoint.Endpoint {
 	return func(context context.Context, request interface{}) (interface{}, error) {
 		req, ok := request.(CreateAccountRequest)
 		if !ok {
@@ -32,7 +34,12 @@ func makeCreateOwnerEndpoint(svc service.ProfileService) endpoint.Endpoint {
 			return nil, err
 		}
 
-		id, err := svc.CreateAccount(req.Name, req.DateOfBirth)
+		claims, ok := context.Value(kitjwt.JWTClaimsContextKey).(*jwt.StandardClaims)
+		if !ok {
+			return nil, errors.New("Error parsing claims")
+		}
+
+		id, err := profileService.CreateAccount(context, claims.Subject, req.Name, req.DateOfBirth)
 		if err != nil {
 			return nil, err
 		}

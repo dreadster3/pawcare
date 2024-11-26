@@ -6,10 +6,13 @@ import (
 	"net/http"
 
 	"github.com/dreadster3/pawcare/services/account/endpoint"
+	"github.com/dreadster3/pawcare/shared/models"
 	"github.com/gin-gonic/gin"
+	kitjwt "github.com/go-kit/kit/auth/jwt"
 	kittransport "github.com/go-kit/kit/transport"
 	kithttp "github.com/go-kit/kit/transport/http"
 	kitlog "github.com/go-kit/log"
+	"github.com/golang-jwt/jwt/v4"
 )
 
 func MakeHTTPHandler(endpoints endpoint.Set, logger kitlog.Logger) http.Handler {
@@ -18,11 +21,13 @@ func MakeHTTPHandler(endpoints endpoint.Set, logger kitlog.Logger) http.Handler 
 		kithttp.ServerErrorEncoder(encodeError),
 	}
 
+	authenticatedOpts := append(opts, kithttp.ServerBefore(kitjwt.HTTPToContext()))
+
 	createOwnerHandler := kithttp.NewServer(
 		endpoints.CreateAccountEndpoint,
 		decodeCreateOwnerRequest,
 		encodeResponse,
-		opts...,
+		authenticatedOpts...,
 	)
 
 	engine := gin.Default()
@@ -43,12 +48,13 @@ func decodeCreateOwnerRequest(_ context.Context, r *http.Request) (interface{}, 
 func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	switch err {
+	case kitjwt.ErrTokenExpired, kitjwt.ErrTokenContextMissing, kitjwt.ErrTokenInvalid, kitjwt.ErrTokenMalformed, kitjwt.ErrTokenNotActive, jwt.ErrSignatureInvalid:
+		w.WriteHeader(http.StatusUnauthorized)
+
 	default:
 		w.WriteHeader(http.StatusInternalServerError)
 	}
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"error": err.Error(),
-	})
+	json.NewEncoder(w).Encode(models.NewErrorResponse(err))
 }
 
 type errorer interface {
