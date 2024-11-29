@@ -3,7 +3,7 @@
 package main
 
 import (
-	"flag"
+	"context"
 	"fmt"
 	"net"
 	"net/http"
@@ -14,13 +14,18 @@ import (
 	"github.com/oklog/oklog/pkg/group"
 	"google.golang.org/grpc"
 
+	"github.com/dreadster3/pawcare/services/account/config"
 	"github.com/dreadster3/pawcare/services/account/endpoint"
 	"github.com/dreadster3/pawcare/services/account/proto"
+	"github.com/dreadster3/pawcare/services/account/repository/mongo"
 	"github.com/dreadster3/pawcare/services/account/service"
 	"github.com/dreadster3/pawcare/services/account/transport"
 	"github.com/dreadster3/pawcare/services/auth"
+	"github.com/dreadster3/pawcare/shared/db/mongodb"
 	"github.com/go-kit/log"
 	kitlog "github.com/go-kit/log"
+
+	"github.com/joho/godotenv"
 )
 
 const (
@@ -51,19 +56,25 @@ func accessControl(h http.Handler) http.Handler {
 }
 
 func _main() error {
-	var (
-		httpPort = envString("HTTP_PORT", DefaultHttpPort)
-		grpcPort = envString("GRPC_PORT", DefaultGrpcPort)
+	godotenv.Load()
 
-		httpAddr = flag.String("http.addr", ":"+httpPort, "HTTP listen address")
-		grpcAddr = flag.String("grpc.addr", ":"+grpcPort, "gRPC listen address")
-	)
+	viper := config.InitConfig()
+	connectionString := BuildConnectionString(viper)
+	ctx := context.Background()
+
+	db, teardown, err := mongodb.ConnectDB(ctx, connectionString, "accounts")
+	defer teardown(ctx)
+	if err != nil {
+		return err
+	}
 
 	logger := kitlog.NewLogfmtLogger(kitlog.NewSyncWriter(os.Stderr))
 	logger = kitlog.With(logger, "ts", kitlog.DefaultTimestampUTC)
 
-	userService := auth.NewUserService(kitlog.With(logger, "service", "userService"))
-	profileService := service.NewProfileService(userService, kitlog.With(logger, "service", "profileService"))
+	ownerRepository := mongo.NewOwnerRepository(kitlog.With(logger, "repository", "owner"), db)
+
+	userService := auth.NewUserService(kitlog.With(logger, "service", "user"))
+	profileService := service.NewAccountService(ownerRepository, userService, kitlog.With(logger, "service", "profile"))
 	endpoints := endpoint.NewSet(profileService, logger)
 
 	httpHandler := transport.MakeHTTPHandler(endpoints, logger)
@@ -74,14 +85,15 @@ func _main() error {
 	var g group.Group
 
 	{
+		httpAddr := fmt.Sprintf(":%s", viper.GetString(config.HTTPPortKey))
 		logger := log.With(logger, "transport", "http")
-		httpListenAddr, err := net.Listen("tcp", *httpAddr)
+		httpListenAddr, err := net.Listen("tcp", httpAddr)
 		if err != nil {
 			return err
 		}
 
 		g.Add(func() error {
-			logger.Log("msg", "Starting server", "addr", *httpAddr)
+			logger.Log("msg", "Starting server", "addr", httpAddr)
 			return http.Serve(httpListenAddr, httpHandler)
 		}, func(err error) {
 			logger.Log("msg", "Closing server", "reason", err)
@@ -90,8 +102,9 @@ func _main() error {
 	}
 
 	{
+		grpcAddr := fmt.Sprintf(":%s", viper.GetString(config.GRPCPortKey))
 		logger := log.With(logger, "transport", "grpc")
-		grpcListenAddr, err := net.Listen("tcp", *grpcAddr)
+		grpcListenAddr, err := net.Listen("tcp", grpcAddr)
 		if err != nil {
 			return err
 		}
@@ -99,7 +112,7 @@ func _main() error {
 		g.Add(func() error {
 			server := grpc.NewServer()
 			proto.RegisterAccountServiceServer(server, grpcHandler)
-			logger.Log("msg", "Starting server", "addr", *grpcAddr)
+			logger.Log("msg", "Starting server", "addr", grpcAddr)
 			return server.Serve(grpcListenAddr)
 		}, func(err error) {
 			logger.Log("msg", "Closing server", "reason", err)

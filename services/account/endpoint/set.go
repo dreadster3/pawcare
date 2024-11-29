@@ -12,7 +12,7 @@ type Set struct {
 	CreateAccountEndpoint endpoint.Endpoint
 }
 
-func NewSet(profileService service.IProfileService, logger log.Logger) Set {
+func NewSet(profileService service.IAccountService, logger log.Logger) Set {
 	kf := func(token *jwt.Token) (interface{}, error) { return []byte("SuperSecret"), nil }
 
 	var createAccountEndpoint endpoint.Endpoint

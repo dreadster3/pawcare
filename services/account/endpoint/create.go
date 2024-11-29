@@ -19,10 +19,11 @@ type CreateAccountRequest struct {
 }
 
 type CreateAccountResponse struct {
-	Id string `json:"id"`
+	Id   string `json:"id"`
+	Name string `json:"name"`
 }
 
-func makeCreateOwnerEndpoint(profileService service.IProfileService) endpoint.Endpoint {
+func makeCreateOwnerEndpoint(accountService service.IAccountService) endpoint.Endpoint {
 	return func(context context.Context, request interface{}) (interface{}, error) {
 		req, ok := request.(CreateAccountRequest)
 		if !ok {
@@ -39,11 +40,11 @@ func makeCreateOwnerEndpoint(profileService service.IProfileService) endpoint.En
 			return nil, errors.New("Error parsing claims")
 		}
 
-		id, err := profileService.CreateAccount(context, claims.Subject, req.Name, req.DateOfBirth)
+		account, err := accountService.CreateAccount(context, claims.Subject, req.Name, req.DateOfBirth)
 		if err != nil {
 			return nil, err
 		}
 
-		return CreateAccountResponse{id}, nil
+		return CreateAccountResponse{string(account.Owner.Id), account.Owner.Name}, nil
 	}
 }

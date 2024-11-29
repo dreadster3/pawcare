@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/dreadster3/pawcare/services/account/endpoint"
+	"github.com/dreadster3/pawcare/services/account/repository"
 	"github.com/dreadster3/pawcare/shared/models"
 	"github.com/gin-gonic/gin"
 	kitjwt "github.com/go-kit/kit/auth/jwt"
@@ -50,7 +51,8 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	switch err {
 	case kitjwt.ErrTokenExpired, kitjwt.ErrTokenContextMissing, kitjwt.ErrTokenInvalid, kitjwt.ErrTokenMalformed, kitjwt.ErrTokenNotActive, jwt.ErrSignatureInvalid:
 		w.WriteHeader(http.StatusUnauthorized)
-
+	case repository.ErrAlreadyCreated:
+		w.WriteHeader(http.StatusConflict)
 	default:
 		w.WriteHeader(http.StatusInternalServerError)
 	}
