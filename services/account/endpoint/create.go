@@ -27,7 +27,7 @@ func makeCreateOwnerEndpoint(accountService service.IAccountService) endpoint.En
 	return func(context context.Context, request interface{}) (interface{}, error) {
 		req, ok := request.(CreateAccountRequest)
 		if !ok {
-			return nil, errors.New("Cannot cast request")
+			return nil, errors.New("cannot cast request")
 		}
 
 		err := validator.New().Struct(req)
@@ -37,7 +37,7 @@ func makeCreateOwnerEndpoint(accountService service.IAccountService) endpoint.En
 
 		claims, ok := context.Value(kitjwt.JWTClaimsContextKey).(*jwt.StandardClaims)
 		if !ok {
-			return nil, errors.New("Error parsing claims")
+			return nil, errors.New("error parsing claims")
 		}
 
 		account, err := accountService.CreateAccount(context, claims.Subject, req.Name, req.DateOfBirth)

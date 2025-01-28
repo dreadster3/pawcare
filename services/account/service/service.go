@@ -27,6 +27,7 @@ func NewAccountService(ownerRepository repository.IOwnerRepository, userService 
 		userService:     userService,
 	}
 	svc = newLoggingMiddleware(logger)(svc)
+	svc = newValidationMiddleware()(svc)
 	return svc
 }
 

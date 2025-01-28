@@ -30,6 +30,12 @@ func (mw loggingMiddleware) CreateAccount(ctx context.Context, userId string, na
 	return mw.next.CreateAccount(ctx, userId, name, dateOfBirth)
 }
 
+func newValidationMiddleware() middleware {
+	return func(next IAccountService) IAccountService {
+		return validationMiddleware{next}
+	}
+}
+
 type validationMiddleware struct {
 	next IAccountService
 }

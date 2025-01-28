@@ -22,7 +22,6 @@ import (
 	"github.com/dreadster3/pawcare/services/account/transport"
 	"github.com/dreadster3/pawcare/services/auth"
 	"github.com/dreadster3/pawcare/shared/db/mongodb"
-	"github.com/go-kit/log"
 	kitlog "github.com/go-kit/log"
 
 	"github.com/joho/godotenv"
@@ -32,14 +31,6 @@ const (
 	DefaultHttpPort string = "8080"
 	DefaultGrpcPort string = "8081"
 )
-
-func envString(env, fallback string) string {
-	e := os.Getenv(env)
-	if e == "" {
-		return fallback
-	}
-	return e
-}
 
 func accessControl(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -86,7 +77,7 @@ func _main() error {
 
 	{
 		httpAddr := fmt.Sprintf(":%s", viper.GetString(config.HTTPPortKey))
-		logger := log.With(logger, "transport", "http")
+		logger := kitlog.With(logger, "transport", "http")
 		httpListenAddr, err := net.Listen("tcp", httpAddr)
 		if err != nil {
 			return err
@@ -103,7 +94,7 @@ func _main() error {
 
 	{
 		grpcAddr := fmt.Sprintf(":%s", viper.GetString(config.GRPCPortKey))
-		logger := log.With(logger, "transport", "grpc")
+		logger := kitlog.With(logger, "transport", "grpc")
 		grpcListenAddr, err := net.Listen("tcp", grpcAddr)
 		if err != nil {
 			return err
