@@ -3,7 +3,6 @@ package endpoint
 import (
 	"context"
 	"errors"
-	"time"
 
 	"github.com/dreadster3/pawcare/services/account/service"
 	kitjwt "github.com/go-kit/kit/auth/jwt"
@@ -13,19 +12,17 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
-type CreateAccountRequest struct {
-	Name        string    `json:"name" validate:"required"`
-	DateOfBirth time.Time `json:"date_of_birth" validate:"required"`
+type GetAccountRequest struct {
 }
 
-type CreateAccountResponse struct {
+type GetAccountResponse struct {
 	Id   string `json:"id"`
 	Name string `json:"name"`
 }
 
-func makeCreateAccountEndpoint(accountService service.IAccountService) endpoint.Endpoint {
+func makeGetAccountEndpoint(accountService service.IAccountService) endpoint.Endpoint {
 	return func(context context.Context, request interface{}) (interface{}, error) {
-		req, ok := request.(CreateAccountRequest)
+		req, ok := request.(GetAccountRequest)
 		if !ok {
 			return nil, errors.New("cannot cast request")
 		}
@@ -40,7 +37,7 @@ func makeCreateAccountEndpoint(accountService service.IAccountService) endpoint.
 			return nil, errors.New("error parsing claims")
 		}
 
-		account, err := accountService.CreateAccount(context, claims.Subject, req.Name, req.DateOfBirth)
+		account, err := accountService.GetAccount(context, claims.Subject)
 		if err != nil {
 			return nil, err
 		}

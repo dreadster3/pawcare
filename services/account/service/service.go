@@ -8,15 +8,18 @@ import (
 	"github.com/dreadster3/pawcare/services/account/entity"
 	"github.com/dreadster3/pawcare/services/account/repository"
 	"github.com/dreadster3/pawcare/services/auth"
+	"github.com/dreadster3/pawcare/shared/utils"
 	"github.com/go-kit/log"
 )
 
 type IAccountService interface {
 	CreateAccount(ctx context.Context, userId string, name string, dateOfBirth time.Time) (aggregate.Account, error)
+	GetAccount(ctx context.Context, userId string) (aggregate.Account, error)
 }
 
 type accountService struct {
 	ownerRepository repository.IOwnerRepository
+	petRepository   repository.IPetRepository
 	userService     auth.IUserService
 }
 
@@ -51,4 +54,27 @@ func (svc *accountService) CreateAccount(ctx context.Context, userId string, nam
 	}
 
 	return account, nil
+}
+
+func (svc *accountService) GetAccount(ctx context.Context, userId string) (aggregate.Account, error) {
+	user, err := svc.userService.GetById(userId)
+	if err != nil {
+		return aggregate.Account{}, err
+	}
+
+	owner, err := svc.ownerRepository.FindByUserId(ctx, user.Id)
+	if err != nil {
+		return aggregate.Account{}, err
+	}
+
+	pets, err := svc.petRepository.FindByOwnerId(owner.Id)
+	if err != nil {
+		return aggregate.Account{}, err
+	}
+
+	return aggregate.Account{
+		User:  user,
+		Owner: &owner,
+		Pets:  utils.ToPointers(pets),
+	}, nil
 }

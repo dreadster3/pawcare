@@ -3,8 +3,9 @@ package mongo
 import (
 	"context"
 
-	"github.com/dreadster3/pawcare/services/account/entity"
+	"github.com/dreadster3/pawcare/services/account/aggregate"
 	"github.com/dreadster3/pawcare/services/account/repository"
+	"github.com/dreadster3/pawcare/services/account/valueobjects"
 	"github.com/dreadster3/pawcare/services/auth"
 	"github.com/go-kit/log"
 	"go.mongodb.org/mongo-driver/bson"
@@ -23,15 +24,17 @@ type owner struct {
 	DateOfBirth primitive.DateTime `bson:"date_of_birth"`
 }
 
-func (o *owner) ToOwner() entity.Owner {
-	return entity.Owner{
-		Id:          entity.OwnerId(o.Id.String()),
-		Name:        o.Name,
-		DateOfBirth: o.DateOfBirth.Time(),
+func (o *owner) ToOwner() *aggregate.Owner {
+	return &aggregate.Owner{
+		Id: aggregate.OwnerId(o.Id.String()),
+		Profile: valueobjects.OwnerProfile{
+			Name:        o.Name,
+			DateOfBirth: o.DateOfBirth.Time(),
+		},
 	}
 }
 
-func FromOwner(userId auth.UserId, o entity.Owner) (*owner, error) {
+func FromOwner(userId auth.UserId, o aggregate.Owner) (*owner, error) {
 	id, err := primitive.ObjectIDFromHex(string(o.Id))
 	if err != nil {
 		id = primitive.NewObjectID()
@@ -45,8 +48,8 @@ func FromOwner(userId auth.UserId, o entity.Owner) (*owner, error) {
 	return &owner{
 		Id:          id,
 		UserId:      userObjectId,
-		Name:        o.Name,
-		DateOfBirth: primitive.NewDateTimeFromTime(o.DateOfBirth),
+		Name:        o.Profile.Name,
+		DateOfBirth: primitive.NewDateTimeFromTime(o.Profile.DateOfBirth),
 	}, nil
 }
 
@@ -62,41 +65,41 @@ func NewOwnerRepository(logger log.Logger, db *mongo.Database) repository.IOwner
 	return repo
 }
 
-func (r *ownerRepository) FindById(ctx context.Context, id string) (entity.Owner, error) {
-	objectId, err := primitive.ObjectIDFromHex(id)
+func (r *ownerRepository) FindById(ctx context.Context, id aggregate.OwnerId) (*aggregate.Owner, error) {
+	objectId, err := primitive.ObjectIDFromHex(string(id))
 	if err != nil {
-		return entity.Owner{}, err
+		return nil, err
 	}
 
 	var result owner
 	if err := r.db.Collection(OwnerCollection).FindOne(ctx, bson.M{"_id": objectId}).Decode(&result); err != nil {
 		if err == mongo.ErrNoDocuments {
-			return entity.Owner{}, repository.ErrNotFound
+			return nil, repository.ErrNotFound
 		}
-		return entity.Owner{}, err
+		return nil, err
 	}
 
 	return result.ToOwner(), nil
 }
 
-func (r *ownerRepository) FindByUserId(ctx context.Context, id auth.UserId) (entity.Owner, error) {
+func (r *ownerRepository) FindByUserId(ctx context.Context, id auth.UserId) (*aggregate.Owner, error) {
 	objectId, err := primitive.ObjectIDFromHex(string(id))
 	if err != nil {
-		return entity.Owner{}, err
+		return nil, err
 	}
 
 	var result owner
 	if err := r.db.Collection(OwnerCollection).FindOne(ctx, bson.M{"user_id": objectId}).Decode(&result); err != nil {
 		if err == mongo.ErrNoDocuments {
-			return entity.Owner{}, repository.ErrNotFound
+			return nil, repository.ErrNotFound
 		}
-		return entity.Owner{}, err
+		return nil, err
 	}
 
 	return result.ToOwner(), nil
 }
 
-func (r *ownerRepository) Create(ctx context.Context, userId auth.UserId, owner *entity.Owner) error {
+func (r *ownerRepository) Create(ctx context.Context, userId auth.UserId, owner *aggregate.Owner) error {
 	if _, err := r.FindByUserId(ctx, userId); err == nil {
 		return repository.ErrAlreadyCreated
 	}
@@ -111,7 +114,7 @@ func (r *ownerRepository) Create(ctx context.Context, userId auth.UserId, owner 
 		return err
 	}
 
-	owner.Id = entity.OwnerId(result.InsertedID.(primitive.ObjectID).Hex())
+	owner.Id = aggregate.OwnerId(result.InsertedID.(primitive.ObjectID).Hex())
 
 	return nil
 }

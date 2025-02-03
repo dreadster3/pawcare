@@ -3,7 +3,7 @@ package mongo
 import (
 	"context"
 
-	"github.com/dreadster3/pawcare/services/account/entity"
+	"github.com/dreadster3/pawcare/services/account/aggregate"
 	"github.com/dreadster3/pawcare/services/account/repository"
 	"github.com/dreadster3/pawcare/services/auth"
 	"github.com/go-kit/log"
@@ -22,7 +22,7 @@ func newLoggingMiddleware(logger log.Logger) ownerMiddleware {
 	}
 }
 
-func (mw *loggingMiddleware) FindById(ctx context.Context, id string) (owner entity.Owner, err error) {
+func (mw *loggingMiddleware) FindById(ctx context.Context, id aggregate.OwnerId) (owner *aggregate.Owner, err error) {
 	defer func() {
 		mw.logger.Log("method", "FindById", "id", id, "owner", owner, "err", err)
 	}()
@@ -30,14 +30,14 @@ func (mw *loggingMiddleware) FindById(ctx context.Context, id string) (owner ent
 	return mw.next.FindById(ctx, id)
 }
 
-func (mw *loggingMiddleware) FindByUserId(ctx context.Context, id auth.UserId) (owner entity.Owner, err error) {
+func (mw *loggingMiddleware) FindByUserId(ctx context.Context, id auth.UserId) (owner *aggregate.Owner, err error) {
 	defer func() {
 		mw.logger.Log("method", "FindByUserId", "id", id, "owner", owner, "err", err)
 	}()
 	return mw.next.FindByUserId(ctx, id)
 }
 
-func (mw *loggingMiddleware) Create(ctx context.Context, userId auth.UserId, owner *entity.Owner) (err error) {
+func (mw *loggingMiddleware) Create(ctx context.Context, userId auth.UserId, owner *aggregate.Owner) (err error) {
 	defer func() {
 		mw.logger.Log("method", "Create", "owner", owner, "err", err)
 	}()
