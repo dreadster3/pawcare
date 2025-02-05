@@ -19,89 +19,89 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	AccountService_Create_FullMethodName = "/proto.AccountService/Create"
+	OwnerService_Get_FullMethodName = "/proto.OwnerService/Get"
 )
 
-// AccountServiceClient is the client API for AccountService service.
+// OwnerServiceClient is the client API for OwnerService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type AccountServiceClient interface {
-	Create(ctx context.Context, in *AccountServiceCreateRequest, opts ...grpc.CallOption) (*AccountServiceCreateResponse, error)
+type OwnerServiceClient interface {
+	Get(ctx context.Context, in *OwnerServiceGetRequest, opts ...grpc.CallOption) (*OwnerServiceGetResponse, error)
 }
 
-type accountServiceClient struct {
+type ownerServiceClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewAccountServiceClient(cc grpc.ClientConnInterface) AccountServiceClient {
-	return &accountServiceClient{cc}
+func NewOwnerServiceClient(cc grpc.ClientConnInterface) OwnerServiceClient {
+	return &ownerServiceClient{cc}
 }
 
-func (c *accountServiceClient) Create(ctx context.Context, in *AccountServiceCreateRequest, opts ...grpc.CallOption) (*AccountServiceCreateResponse, error) {
-	out := new(AccountServiceCreateResponse)
-	err := c.cc.Invoke(ctx, AccountService_Create_FullMethodName, in, out, opts...)
+func (c *ownerServiceClient) Get(ctx context.Context, in *OwnerServiceGetRequest, opts ...grpc.CallOption) (*OwnerServiceGetResponse, error) {
+	out := new(OwnerServiceGetResponse)
+	err := c.cc.Invoke(ctx, OwnerService_Get_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// AccountServiceServer is the server API for AccountService service.
-// All implementations must embed UnimplementedAccountServiceServer
+// OwnerServiceServer is the server API for OwnerService service.
+// All implementations must embed UnimplementedOwnerServiceServer
 // for forward compatibility
-type AccountServiceServer interface {
-	Create(context.Context, *AccountServiceCreateRequest) (*AccountServiceCreateResponse, error)
-	mustEmbedUnimplementedAccountServiceServer()
+type OwnerServiceServer interface {
+	Get(context.Context, *OwnerServiceGetRequest) (*OwnerServiceGetResponse, error)
+	mustEmbedUnimplementedOwnerServiceServer()
 }
 
-// UnimplementedAccountServiceServer must be embedded to have forward compatible implementations.
-type UnimplementedAccountServiceServer struct {
+// UnimplementedOwnerServiceServer must be embedded to have forward compatible implementations.
+type UnimplementedOwnerServiceServer struct {
 }
 
-func (UnimplementedAccountServiceServer) Create(context.Context, *AccountServiceCreateRequest) (*AccountServiceCreateResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Create not implemented")
+func (UnimplementedOwnerServiceServer) Get(context.Context, *OwnerServiceGetRequest) (*OwnerServiceGetResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
 }
-func (UnimplementedAccountServiceServer) mustEmbedUnimplementedAccountServiceServer() {}
+func (UnimplementedOwnerServiceServer) mustEmbedUnimplementedOwnerServiceServer() {}
 
-// UnsafeAccountServiceServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to AccountServiceServer will
+// UnsafeOwnerServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to OwnerServiceServer will
 // result in compilation errors.
-type UnsafeAccountServiceServer interface {
-	mustEmbedUnimplementedAccountServiceServer()
+type UnsafeOwnerServiceServer interface {
+	mustEmbedUnimplementedOwnerServiceServer()
 }
 
-func RegisterAccountServiceServer(s grpc.ServiceRegistrar, srv AccountServiceServer) {
-	s.RegisterService(&AccountService_ServiceDesc, srv)
+func RegisterOwnerServiceServer(s grpc.ServiceRegistrar, srv OwnerServiceServer) {
+	s.RegisterService(&OwnerService_ServiceDesc, srv)
 }
 
-func _AccountService_Create_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AccountServiceCreateRequest)
+func _OwnerService_Get_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(OwnerServiceGetRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AccountServiceServer).Create(ctx, in)
+		return srv.(OwnerServiceServer).Get(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: AccountService_Create_FullMethodName,
+		FullMethod: OwnerService_Get_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AccountServiceServer).Create(ctx, req.(*AccountServiceCreateRequest))
+		return srv.(OwnerServiceServer).Get(ctx, req.(*OwnerServiceGetRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// AccountService_ServiceDesc is the grpc.ServiceDesc for AccountService service.
+// OwnerService_ServiceDesc is the grpc.ServiceDesc for OwnerService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var AccountService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "proto.AccountService",
-	HandlerType: (*AccountServiceServer)(nil),
+var OwnerService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "proto.OwnerService",
+	HandlerType: (*OwnerServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Create",
-			Handler:    _AccountService_Create_Handler,
+			MethodName: "Get",
+			Handler:    _OwnerService_Get_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

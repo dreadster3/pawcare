@@ -2,10 +2,11 @@ package endpoint
 
 import (
 	"context"
-	"errors"
 	"time"
 
-	"github.com/dreadster3/pawcare/services/account/service"
+	ownerservice "github.com/dreadster3/pawcare/services/account/service/owner_service"
+	"github.com/dreadster3/pawcare/services/account/valueobjects"
+	"github.com/dreadster3/pawcare/services/auth"
 	kitjwt "github.com/go-kit/kit/auth/jwt"
 	"github.com/go-kit/kit/endpoint"
 	"github.com/golang-jwt/jwt/v4"
@@ -13,21 +14,21 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
-type CreateAccountRequest struct {
+type CreateOwnerRequest struct {
 	Name        string    `json:"name" validate:"required"`
 	DateOfBirth time.Time `json:"date_of_birth" validate:"required"`
 }
 
-type CreateAccountResponse struct {
+type CreateOwnerResponse struct {
 	Id   string `json:"id"`
 	Name string `json:"name"`
 }
 
-func makeCreateAccountEndpoint(accountService service.IAccountService) endpoint.Endpoint {
+func makeCreateOwnerEndpoint(ownerService ownerservice.IOwnerService) endpoint.Endpoint {
 	return func(context context.Context, request interface{}) (interface{}, error) {
-		req, ok := request.(CreateAccountRequest)
+		req, ok := request.(CreateOwnerRequest)
 		if !ok {
-			return nil, errors.New("cannot cast request")
+			return nil, ErrCastRequest
 		}
 
 		err := validator.New().Struct(req)
@@ -37,14 +38,16 @@ func makeCreateAccountEndpoint(accountService service.IAccountService) endpoint.
 
 		claims, ok := context.Value(kitjwt.JWTClaimsContextKey).(*jwt.StandardClaims)
 		if !ok {
-			return nil, errors.New("error parsing claims")
+			return nil, ErrParsingClaims
 		}
 
-		account, err := accountService.CreateAccount(context, claims.Subject, req.Name, req.DateOfBirth)
+		userId := auth.UserId(claims.Subject)
+		profile := valueobjects.NewOwnerProfile(req.Name, req.DateOfBirth)
+		owner, err := ownerService.Create(context, userId, profile)
 		if err != nil {
 			return nil, err
 		}
 
-		return CreateAccountResponse{string(account.Owner.Id), account.Owner.Name}, nil
+		return CreateOwnerResponse{string(owner.Id), owner.Profile.Name}, nil
 	}
 }

@@ -25,21 +25,23 @@ func MakeHTTPHandler(endpoints endpoint.Set, logger kitlog.Logger) http.Handler 
 	authenticatedOpts := append(opts, kithttp.ServerBefore(kitjwt.HTTPToContext()))
 
 	createOwnerHandler := kithttp.NewServer(
-		endpoints.CreateAccountEndpoint,
+		endpoints.CreateOwnerEndpoint,
 		decodeCreateOwnerRequest,
 		encodeResponse,
 		authenticatedOpts...,
 	)
 
 	engine := gin.Default()
-	group := engine.Group("/api/v1/accounts")
-	group.Handle("POST", "/", gin.WrapH(createOwnerHandler))
+	apiGroup := engine.Group("/api/v1")
+
+	ownersGroup := apiGroup.Group("/owners")
+	ownersGroup.Handle("POST", "/", gin.WrapH(createOwnerHandler))
 
 	return engine.Handler()
 }
 
 func decodeCreateOwnerRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	var request endpoint.CreateAccountRequest
+	var request endpoint.CreateOwnerRequest
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
 		return nil, err
 	}

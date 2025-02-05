@@ -10,8 +10,8 @@ type OwnerProfile struct {
 	DateOfBirth time.Time `validate:"required"`
 }
 
-func NewOwnerProfile(name string, dateOfBirth time.Time) *OwnerProfile {
-	return &OwnerProfile{
+func NewOwnerProfile(name string, dateOfBirth time.Time) OwnerProfile {
+	return OwnerProfile{
 		Name:        name,
 		DateOfBirth: dateOfBirth,
 	}

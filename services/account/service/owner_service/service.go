@@ -1,4 +1,4 @@
-package owner
+package ownerservice
 
 import (
 	"context"
@@ -7,12 +7,14 @@ import (
 	"github.com/dreadster3/pawcare/services/account/repository"
 	"github.com/dreadster3/pawcare/services/account/valueobjects"
 	"github.com/dreadster3/pawcare/services/auth"
+	"github.com/go-kit/log"
 )
 
 type IOwnerService interface {
 	FindById(ctx context.Context, id aggregate.OwnerId) (*aggregate.Owner, error)
 	FindByUserId(ctx context.Context, userId auth.UserId) (*aggregate.Owner, error)
-	Save(ctx context.Context, userId auth.UserId, ownerProfile *valueobjects.OwnerProfile) error
+	Create(ctx context.Context, userId auth.UserId, ownerProfile valueobjects.OwnerProfile) (*aggregate.Owner, error)
+	Update(ctx context.Context, owner *aggregate.Owner) (*aggregate.Owner, error)
 }
 
 type ownerService struct {
@@ -20,11 +22,16 @@ type ownerService struct {
 	userService     auth.IUserService
 }
 
-func NewOwnerService(ownerRepository repository.IOwnerRepository, userService auth.IUserService) IOwnerService {
-	return &ownerService{
+func NewOwnerService(ownerRepository repository.IOwnerRepository, userService auth.IUserService, logger log.Logger) IOwnerService {
+	var svc IOwnerService
+	svc = &ownerService{
 		ownerRepository: ownerRepository,
 		userService:     userService,
 	}
+	svc = newLoggingMiddleware(logger)(svc)
+	svc = newValidationMiddleware()(svc)
+
+	return svc
 }
 
 func (svc *ownerService) FindById(ctx context.Context, id aggregate.OwnerId) (*aggregate.Owner, error) {
@@ -35,7 +42,19 @@ func (svc *ownerService) FindByUserId(ctx context.Context, userId auth.UserId) (
 	return svc.ownerRepository.FindByUserId(ctx, userId)
 }
 
-func (svc *ownerService) Save(ctx context.Context, userId auth.UserId, ownerProfile *valueobjects.OwnerProfile) error {
+func (svc *ownerService) Create(ctx context.Context, userId auth.UserId, ownerProfile valueobjects.OwnerProfile) (*aggregate.Owner, error) {
 	ownerAggregate := aggregate.NewOwner(userId, ownerProfile)
-	return svc.ownerRepository.Save(ctx, ownerAggregate)
+	if err := svc.ownerRepository.Create(ctx, ownerAggregate); err != nil {
+		return nil, err
+	}
+
+	return ownerAggregate, nil
+}
+
+func (svc *ownerService) Update(ctx context.Context, owner *aggregate.Owner) (*aggregate.Owner, error) {
+	if err := svc.ownerRepository.Update(ctx, owner); err != nil {
+		return nil, err
+	}
+
+	return owner, nil
 }

@@ -7,7 +7,6 @@ import (
 	"github.com/dreadster3/pawcare/services/account/repository"
 	"github.com/dreadster3/pawcare/services/account/valueobjects"
 	"github.com/dreadster3/pawcare/services/auth"
-	"github.com/go-kit/log"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -24,7 +23,7 @@ type owner struct {
 	DateOfBirth primitive.DateTime `bson:"date_of_birth"`
 }
 
-func (o *owner) ToOwner() *aggregate.Owner {
+func (o *owner) ToModel() *aggregate.Owner {
 	return &aggregate.Owner{
 		Id: aggregate.OwnerId(o.Id.String()),
 		Profile: valueobjects.OwnerProfile{
@@ -34,20 +33,23 @@ func (o *owner) ToOwner() *aggregate.Owner {
 	}
 }
 
-func FromOwner(userId auth.UserId, o aggregate.Owner) (*owner, error) {
+func FromModel(o aggregate.Owner) (*owner, error) {
 	id, err := primitive.ObjectIDFromHex(string(o.Id))
 	if err != nil {
+		if err != primitive.ErrInvalidHex {
+			return nil, err
+		}
 		id = primitive.NewObjectID()
 	}
 
-	userObjectId, err := primitive.ObjectIDFromHex(string(userId))
+	userId, err := primitive.ObjectIDFromHex(string(o.UserId))
 	if err != nil {
 		return nil, err
 	}
 
 	return &owner{
 		Id:          id,
-		UserId:      userObjectId,
+		UserId:      userId,
 		Name:        o.Profile.Name,
 		DateOfBirth: primitive.NewDateTimeFromTime(o.Profile.DateOfBirth),
 	}, nil
@@ -57,12 +59,12 @@ type ownerRepository struct {
 	db *mongo.Database
 }
 
-func NewOwnerRepository(logger log.Logger, db *mongo.Database) repository.IOwnerRepository {
-	var repo repository.IOwnerRepository
-	repo = &ownerRepository{db}
-	repo = newLoggingMiddleware(logger)(repo)
+func NewOwnerRepository(db *mongo.Database) repository.IOwnerRepository {
+	return &ownerRepository{db}
+}
 
-	return repo
+func (r *ownerRepository) Collection() *mongo.Collection {
+	return r.db.Collection(OwnerCollection)
 }
 
 func (r *ownerRepository) FindById(ctx context.Context, id aggregate.OwnerId) (*aggregate.Owner, error) {
@@ -72,14 +74,15 @@ func (r *ownerRepository) FindById(ctx context.Context, id aggregate.OwnerId) (*
 	}
 
 	var result owner
-	if err := r.db.Collection(OwnerCollection).FindOne(ctx, bson.M{"_id": objectId}).Decode(&result); err != nil {
+	if err := r.Collection().FindOne(ctx, bson.M{"_id": objectId}).Decode(&result); err != nil {
 		if err == mongo.ErrNoDocuments {
 			return nil, repository.ErrNotFound
 		}
+
 		return nil, err
 	}
 
-	return result.ToOwner(), nil
+	return result.ToModel(), nil
 }
 
 func (r *ownerRepository) FindByUserId(ctx context.Context, id auth.UserId) (*aggregate.Owner, error) {
@@ -89,32 +92,41 @@ func (r *ownerRepository) FindByUserId(ctx context.Context, id auth.UserId) (*ag
 	}
 
 	var result owner
-	if err := r.db.Collection(OwnerCollection).FindOne(ctx, bson.M{"user_id": objectId}).Decode(&result); err != nil {
+	if err := r.Collection().FindOne(ctx, bson.M{"user_id": objectId}).Decode(&result); err != nil {
 		if err == mongo.ErrNoDocuments {
 			return nil, repository.ErrNotFound
 		}
+
 		return nil, err
 	}
 
-	return result.ToOwner(), nil
+	return result.ToModel(), nil
 }
 
-func (r *ownerRepository) Create(ctx context.Context, userId auth.UserId, owner *aggregate.Owner) error {
-	if _, err := r.FindByUserId(ctx, userId); err == nil {
-		return repository.ErrAlreadyCreated
-	}
-
-	dbEntity, err := FromOwner(userId, *owner)
+func (r *ownerRepository) Create(ctx context.Context, owner *aggregate.Owner) error {
+	entity, err := FromModel(*owner)
 	if err != nil {
 		return err
 	}
 
-	result, err := r.db.Collection(OwnerCollection).InsertOne(ctx, dbEntity)
+	result, err := r.Collection().InsertOne(ctx, entity)
 	if err != nil {
 		return err
 	}
 
 	owner.Id = aggregate.OwnerId(result.InsertedID.(primitive.ObjectID).Hex())
+	return nil
+}
+
+func (r *ownerRepository) Update(ctx context.Context, owner *aggregate.Owner) error {
+	entity, err := FromModel(*owner)
+	if err != nil {
+		return err
+	}
+
+	if _, err := r.Collection().UpdateOne(ctx, bson.M{"_id": entity.Id}, bson.M{"$set": entity}); err != nil {
+		return err
+	}
 
 	return nil
 }

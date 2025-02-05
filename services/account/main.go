@@ -18,7 +18,7 @@ import (
 	"github.com/dreadster3/pawcare/services/account/endpoint"
 	"github.com/dreadster3/pawcare/services/account/proto"
 	"github.com/dreadster3/pawcare/services/account/repository/mongo"
-	"github.com/dreadster3/pawcare/services/account/service"
+	ownerservice "github.com/dreadster3/pawcare/services/account/service/owner_service"
 	"github.com/dreadster3/pawcare/services/account/transport"
 	"github.com/dreadster3/pawcare/services/auth"
 	"github.com/dreadster3/pawcare/shared/db/mongodb"
@@ -62,11 +62,11 @@ func _main() error {
 	logger := kitlog.NewLogfmtLogger(kitlog.NewSyncWriter(os.Stderr))
 	logger = kitlog.With(logger, "ts", kitlog.DefaultTimestampUTC)
 
-	ownerRepository := mongo.NewOwnerRepository(kitlog.With(logger, "repository", "owner"), db)
+	ownerRepository := mongo.NewOwnerRepository(db)
 
 	userService := auth.NewUserService(kitlog.With(logger, "service", "user"))
-	profileService := service.NewAccountService(ownerRepository, userService, kitlog.With(logger, "service", "profile"))
-	endpoints := endpoint.NewSet(profileService, logger)
+	ownerService := ownerservice.NewOwnerService(ownerRepository, userService, kitlog.With(logger, "service", "owner"))
+	endpoints := endpoint.NewSet(ownerService, logger)
 
 	httpHandler := transport.MakeHTTPHandler(endpoints, logger)
 	httpHandler = accessControl(httpHandler)
@@ -102,7 +102,7 @@ func _main() error {
 
 		g.Add(func() error {
 			server := grpc.NewServer()
-			proto.RegisterAccountServiceServer(server, grpcHandler)
+			proto.RegisterOwnerServiceServer(server, grpcHandler)
 			logger.Log("msg", "Starting server", "addr", grpcAddr)
 			return server.Serve(grpcListenAddr)
 		}, func(err error) {

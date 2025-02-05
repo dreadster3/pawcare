@@ -4,14 +4,15 @@ package proto;
 
 option go_package = "github.com/dreadster3/pawcare/services/account/proto";
 
-service AccountService {
-  rpc Create(AccountServiceCreateRequest) returns (AccountServiceCreateResponse) {}
+service OwnerService {
+  rpc Get(OwnerServiceGetRequest) returns (OwnerServiceGetResponse) {}
 }
 
-message AccountServiceCreateRequest {
-  string name = 1;
-}
-
-message AccountServiceCreateResponse {
+message OwnerServiceGetRequest {
   string id = 1;
+}
+
+message OwnerServiceGetResponse {
+  string id = 1;
+  string name = 2;
 }

@@ -1,4 +1,4 @@
-package owner
+package ownerservice
 
 import (
 	"context"
@@ -32,20 +32,27 @@ func (mw *loggingMiddleware) FindById(ctx context.Context, id aggregate.OwnerId)
 	return mw.next.FindById(ctx, id)
 }
 
-func (mw *loggingMiddleware) FindByUserId(ctx context.Context, userId auth.UserId) (*aggregate.Owner, error) {
+func (mw *loggingMiddleware) FindByUserId(ctx context.Context, userId auth.UserId) (owner *aggregate.Owner, err error) {
 	defer func() {
-		mw.logger.Log("method", "FindByUserId", "userId", userId)
+		mw.logger.Log("method", "FindByUserId", "userId", userId, "owner", owner, "err", err)
 	}()
 
 	return mw.next.FindByUserId(ctx, userId)
 }
 
-func (mw *loggingMiddleware) Save(ctx context.Context, userId auth.UserId, ownerProfile *valueobjects.OwnerProfile) error {
+func (mw *loggingMiddleware) Create(ctx context.Context, userId auth.UserId, ownerProfile valueobjects.OwnerProfile) (owner *aggregate.Owner, err error) {
 	defer func() {
-		mw.logger.Log("method", "Save", "userId", userId, "owner", ownerProfile)
+		mw.logger.Log("method", "Save", "userId", userId, "ownerProfile", ownerProfile, "owner", "err", err)
 	}()
 
-	return mw.next.Save(ctx, userId, ownerProfile)
+	return mw.next.Create(ctx, userId, ownerProfile)
+}
+
+func (mw *loggingMiddleware) Update(ctx context.Context, owner *aggregate.Owner) (result *aggregate.Owner, err error) {
+	defer func() {
+		mw.logger.Log("method", "Update", "owner", owner, "result", result, "err", err)
+	}()
+	return mw.next.Update(ctx, owner)
 }
 
 type validationMiddleware struct {
@@ -66,14 +73,26 @@ func (mw *validationMiddleware) FindByUserId(ctx context.Context, userId auth.Us
 	return mw.next.FindByUserId(ctx, userId)
 }
 
-func (mw *validationMiddleware) Save(ctx context.Context, userId auth.UserId, ownerProfile *valueobjects.OwnerProfile) error {
+func (mw *validationMiddleware) Create(ctx context.Context, userId auth.UserId, ownerProfile valueobjects.OwnerProfile) (*aggregate.Owner, error) {
 	if err := validator.New().Struct(ownerProfile); err != nil {
-		return err
+		return nil, err
 	}
 
 	if time.Now().After(ownerProfile.DateOfBirth) || time.Now().AddDate(-150, 0, 0).Before(ownerProfile.DateOfBirth) {
-		return ErrInvalidDate
+		return nil, ErrInvalidDate
 	}
 
-	return mw.next.Save(ctx, userId, ownerProfile)
+	return mw.next.Create(ctx, userId, ownerProfile)
+}
+
+func (mw *validationMiddleware) Update(ctx context.Context, owner *aggregate.Owner) (*aggregate.Owner, error) {
+	if err := validator.New().Struct(owner.Profile); err != nil {
+		return nil, err
+	}
+
+	if time.Now().After(owner.Profile.DateOfBirth) || time.Now().AddDate(-150, 0, 0).Before(owner.Profile.DateOfBirth) {
+		return nil, ErrInvalidDate
+	}
+
+	return mw.next.Update(ctx, owner)
 }

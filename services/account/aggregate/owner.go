@@ -13,9 +13,9 @@ type Owner struct {
 	Profile valueobjects.OwnerProfile
 }
 
-func NewOwner(userId auth.UserId, profile *valueobjects.OwnerProfile) *Owner {
+func NewOwner(userId auth.UserId, profile valueobjects.OwnerProfile) *Owner {
 	return &Owner{
 		UserId:  userId,
-		Profile: *profile,
+		Profile: profile,
 	}
 }

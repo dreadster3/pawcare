@@ -9,3 +9,10 @@ type Pet struct {
 	OwnerId OwnerId
 	Profile valueobjects.PetProfile
 }
+
+func NewPet(ownerId OwnerId, profile valueobjects.PetProfile) *Pet {
+	return &Pet{
+		OwnerId: ownerId,
+		Profile: profile,
+	}
+}
