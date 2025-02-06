@@ -1,4 +1,4 @@
-package pet
+package petservice
 
 import (
 	"github.com/dreadster3/pawcare/services/account/aggregate"
@@ -11,7 +11,8 @@ import (
 type IPetService interface {
 	FindById(ctx context.Context, petId aggregate.PetId) (*aggregate.Pet, error)
 	FindByOwnerId(ctx context.Context, ownerId aggregate.OwnerId) ([]*aggregate.Pet, error)
-	Save(ctx context.Context, ownerId aggregate.OwnerId, petProfile valueobjects.PetProfile) error
+	Create(ctx context.Context, ownerId aggregate.OwnerId, petProfile valueobjects.PetProfile) (*aggregate.Pet, error)
+	Update(ctx context.Context, pet *aggregate.Pet) (*aggregate.Pet, error)
 }
 
 type petService struct {
@@ -35,7 +36,19 @@ func (svc *petService) FindByOwnerId(ctx context.Context, ownerId aggregate.Owne
 	return svc.petRepository.FindByOwnerId(ctx, ownerId)
 }
 
-func (svc *petService) Save(ctx context.Context, ownerId aggregate.OwnerId, petProfile valueobjects.PetProfile) error {
+func (svc *petService) Create(ctx context.Context, ownerId aggregate.OwnerId, petProfile valueobjects.PetProfile) (*aggregate.Pet, error) {
 	petAggregate := aggregate.NewPet(ownerId, petProfile)
-	return svc.petRepository.Save(ctx, petAggregate)
+	if err := svc.petRepository.Create(ctx, petAggregate); err != nil {
+		return nil, err
+	}
+
+	return petAggregate, nil
+}
+
+func (svc *petService) Update(ctx context.Context, pet *aggregate.Pet) (*aggregate.Pet, error) {
+	if err := svc.petRepository.Update(ctx, pet); err != nil {
+		return nil, err
+	}
+
+	return pet, nil
 }

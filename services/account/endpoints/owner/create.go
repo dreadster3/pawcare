@@ -1,10 +1,11 @@
-package endpoint
+package ownerendpoints
 
 import (
 	"context"
 	"time"
 
-	ownerservice "github.com/dreadster3/pawcare/services/account/service/owner_service"
+	"github.com/dreadster3/pawcare/services/account/endpoints"
+	ownerservice "github.com/dreadster3/pawcare/services/account/service/owner"
 	"github.com/dreadster3/pawcare/services/account/valueobjects"
 	"github.com/dreadster3/pawcare/services/auth"
 	kitjwt "github.com/go-kit/kit/auth/jwt"
@@ -24,11 +25,11 @@ type CreateOwnerResponse struct {
 	Name string `json:"name"`
 }
 
-func makeCreateOwnerEndpoint(ownerService ownerservice.IOwnerService) endpoint.Endpoint {
+func MakeCreateOwnerEndpoint(ownerService ownerservice.IOwnerService) endpoint.Endpoint {
 	return func(context context.Context, request interface{}) (interface{}, error) {
 		req, ok := request.(CreateOwnerRequest)
 		if !ok {
-			return nil, ErrCastRequest
+			return nil, endpoints.ErrCastRequest
 		}
 
 		err := validator.New().Struct(req)
@@ -38,7 +39,7 @@ func makeCreateOwnerEndpoint(ownerService ownerservice.IOwnerService) endpoint.E
 
 		claims, ok := context.Value(kitjwt.JWTClaimsContextKey).(*jwt.StandardClaims)
 		if !ok {
-			return nil, ErrParsingClaims
+			return nil, endpoints.ErrParsingClaims
 		}
 
 		userId := auth.UserId(claims.Subject)

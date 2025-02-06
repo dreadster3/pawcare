@@ -9,3 +9,11 @@ func ToPointers[T any](arr []T) []*T {
 
 	return result
 }
+
+func Map[T, R any](arr []T, mapper func(T) R) []R {
+	result := make([]R, len(arr))
+	for index, element := range arr {
+		result[index] = mapper(element)
+	}
+	return result
+}

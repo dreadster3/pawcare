@@ -1,4 +1,4 @@
-package pet
+package petservice
 
 import (
 	"github.com/dreadster3/pawcare/services/account/aggregate"
@@ -34,9 +34,18 @@ func (mw *loggingMiddleware) FindByOwnerId(ctx context.Context, ownerId aggregat
 	return mw.next.FindByOwnerId(ctx, ownerId)
 }
 
-func (mw *loggingMiddleware) Save(ctx context.Context, ownerId aggregate.OwnerId, petProfile valueobjects.PetProfile) (err error) {
+func (mw *loggingMiddleware) Create(ctx context.Context, ownerId aggregate.OwnerId, petProfile valueobjects.PetProfile) (pet *aggregate.Pet, err error) {
 	defer func() {
-		mw.logger.Log("method", "Save", "ownerId", ownerId, "pet", petProfile, "err", err)
+		mw.logger.Log("method", "Create", "ownerId", ownerId, "pet", pet, "err", err)
 	}()
-	return mw.next.Save(ctx, ownerId, petProfile)
+
+	return mw.next.Create(ctx, ownerId, petProfile)
+}
+
+func (mw *loggingMiddleware) Update(ctx context.Context, pet *aggregate.Pet) (p *aggregate.Pet, err error) {
+	defer func() {
+		mw.logger.Log("method", "Update", "pet", pet, "err", err)
+	}()
+
+	return mw.next.Update(ctx, pet)
 }

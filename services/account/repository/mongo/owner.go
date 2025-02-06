@@ -24,16 +24,13 @@ type owner struct {
 }
 
 func (o *owner) ToModel() *aggregate.Owner {
-	return &aggregate.Owner{
-		Id: aggregate.OwnerId(o.Id.String()),
-		Profile: valueobjects.OwnerProfile{
-			Name:        o.Name,
-			DateOfBirth: o.DateOfBirth.Time(),
-		},
-	}
+	ownerProfile := valueobjects.NewOwnerProfile(o.Name, o.DateOfBirth.Time())
+	owner := aggregate.NewOwner(auth.UserId(o.UserId.Hex()), ownerProfile)
+	owner.Id = aggregate.OwnerId(o.Id.Hex())
+	return owner
 }
 
-func FromModel(o aggregate.Owner) (*owner, error) {
+func fromOwnerModel(o aggregate.Owner) (*owner, error) {
 	id, err := primitive.ObjectIDFromHex(string(o.Id))
 	if err != nil {
 		if err != primitive.ErrInvalidHex {
@@ -104,7 +101,7 @@ func (r *ownerRepository) FindByUserId(ctx context.Context, id auth.UserId) (*ag
 }
 
 func (r *ownerRepository) Create(ctx context.Context, owner *aggregate.Owner) error {
-	entity, err := FromModel(*owner)
+	entity, err := fromOwnerModel(*owner)
 	if err != nil {
 		return err
 	}
@@ -119,7 +116,7 @@ func (r *ownerRepository) Create(ctx context.Context, owner *aggregate.Owner) er
 }
 
 func (r *ownerRepository) Update(ctx context.Context, owner *aggregate.Owner) error {
-	entity, err := FromModel(*owner)
+	entity, err := fromOwnerModel(*owner)
 	if err != nil {
 		return err
 	}
