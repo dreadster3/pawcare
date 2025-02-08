@@ -1,11 +1,10 @@
-package ownerservice
+package service
 
 import (
 	"context"
 	"time"
 
-	"github.com/dreadster3/pawcare/services/account/aggregate"
-	"github.com/dreadster3/pawcare/services/account/valueobjects"
+	"github.com/dreadster3/pawcare/services/account/owner/domain"
 	"github.com/dreadster3/pawcare/services/auth"
 	"github.com/go-kit/log"
 	"github.com/go-playground/validator/v10"
@@ -24,7 +23,7 @@ func newLoggingMiddleware(logger log.Logger) middleware {
 	}
 }
 
-func (mw *loggingMiddleware) FindById(ctx context.Context, id aggregate.OwnerId) (owner *aggregate.Owner, err error) {
+func (mw *loggingMiddleware) FindById(ctx context.Context, id domain.OwnerId) (owner *domain.Owner, err error) {
 	defer func() {
 		mw.logger.Log("method", "FindById", "id", id, "owner", owner, "err", err)
 	}()
@@ -32,7 +31,7 @@ func (mw *loggingMiddleware) FindById(ctx context.Context, id aggregate.OwnerId)
 	return mw.next.FindById(ctx, id)
 }
 
-func (mw *loggingMiddleware) FindByUserId(ctx context.Context, userId auth.UserId) (owner *aggregate.Owner, err error) {
+func (mw *loggingMiddleware) FindByUserId(ctx context.Context, userId auth.UserId) (owner *domain.Owner, err error) {
 	defer func() {
 		mw.logger.Log("method", "FindByUserId", "userId", userId, "owner", owner, "err", err)
 	}()
@@ -40,7 +39,7 @@ func (mw *loggingMiddleware) FindByUserId(ctx context.Context, userId auth.UserI
 	return mw.next.FindByUserId(ctx, userId)
 }
 
-func (mw *loggingMiddleware) Create(ctx context.Context, userId auth.UserId, ownerProfile valueobjects.OwnerProfile) (owner *aggregate.Owner, err error) {
+func (mw *loggingMiddleware) Create(ctx context.Context, userId auth.UserId, ownerProfile domain.OwnerProfile) (owner *domain.Owner, err error) {
 	defer func() {
 		mw.logger.Log("method", "Save", "userId", userId, "ownerProfile", ownerProfile, "owner", "err", err)
 	}()
@@ -48,7 +47,7 @@ func (mw *loggingMiddleware) Create(ctx context.Context, userId auth.UserId, own
 	return mw.next.Create(ctx, userId, ownerProfile)
 }
 
-func (mw *loggingMiddleware) Update(ctx context.Context, owner *aggregate.Owner) (result *aggregate.Owner, err error) {
+func (mw *loggingMiddleware) Update(ctx context.Context, owner *domain.Owner) (result *domain.Owner, err error) {
 	defer func() {
 		mw.logger.Log("method", "Update", "owner", owner, "result", result, "err", err)
 	}()
@@ -65,15 +64,15 @@ func newValidationMiddleware() middleware {
 	}
 }
 
-func (mw *validationMiddleware) FindById(ctx context.Context, id aggregate.OwnerId) (*aggregate.Owner, error) {
+func (mw *validationMiddleware) FindById(ctx context.Context, id domain.OwnerId) (*domain.Owner, error) {
 	return mw.next.FindById(ctx, id)
 }
 
-func (mw *validationMiddleware) FindByUserId(ctx context.Context, userId auth.UserId) (*aggregate.Owner, error) {
+func (mw *validationMiddleware) FindByUserId(ctx context.Context, userId auth.UserId) (*domain.Owner, error) {
 	return mw.next.FindByUserId(ctx, userId)
 }
 
-func (mw *validationMiddleware) Create(ctx context.Context, userId auth.UserId, ownerProfile valueobjects.OwnerProfile) (*aggregate.Owner, error) {
+func (mw *validationMiddleware) Create(ctx context.Context, userId auth.UserId, ownerProfile domain.OwnerProfile) (*domain.Owner, error) {
 	if err := validator.New().Struct(ownerProfile); err != nil {
 		return nil, err
 	}
@@ -85,7 +84,7 @@ func (mw *validationMiddleware) Create(ctx context.Context, userId auth.UserId, 
 	return mw.next.Create(ctx, userId, ownerProfile)
 }
 
-func (mw *validationMiddleware) Update(ctx context.Context, owner *aggregate.Owner) (*aggregate.Owner, error) {
+func (mw *validationMiddleware) Update(ctx context.Context, owner *domain.Owner) (*domain.Owner, error) {
 	if err := validator.New().Struct(owner.Profile); err != nil {
 		return nil, err
 	}

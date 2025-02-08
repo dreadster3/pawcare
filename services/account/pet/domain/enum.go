@@ -1,4 +1,4 @@
-package valueobjects
+package domain
 
 type EGender string
 

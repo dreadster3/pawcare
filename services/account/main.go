@@ -15,11 +15,12 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/dreadster3/pawcare/services/account/config"
-	"github.com/dreadster3/pawcare/services/account/endpoint"
+	ownerendpoint "github.com/dreadster3/pawcare/services/account/owner/endpoint"
+	ownerservice "github.com/dreadster3/pawcare/services/account/owner/service"
+	petendpoint "github.com/dreadster3/pawcare/services/account/pet/endpoint"
+	petservice "github.com/dreadster3/pawcare/services/account/pet/service"
 	"github.com/dreadster3/pawcare/services/account/proto"
 	"github.com/dreadster3/pawcare/services/account/repository/mongo"
-	ownerservice "github.com/dreadster3/pawcare/services/account/service/owner"
-	petservice "github.com/dreadster3/pawcare/services/account/service/pet"
 	"github.com/dreadster3/pawcare/services/account/transport"
 	"github.com/dreadster3/pawcare/shared/db/mongodb"
 	kitlog "github.com/go-kit/log"
@@ -67,7 +68,8 @@ func _main() error {
 
 	ownerService := ownerservice.NewOwnerService(ownerRepository, kitlog.With(logger, "service", "owner"))
 	petService := petservice.NewPetService(petRepository, kitlog.With(logger, "service", "pet"))
-	endpoints := endpoint.NewSet(ownerService, petService, logger)
+	ownerEndpoints := ownerendpoint.NewSet(ownerService, logger)
+	petEndpoints := petendpoint.NewSet(petService, logger)
 
 	httpHandler := transport.MakeHTTPHandler(endpoints, logger)
 	httpHandler = accessControl(httpHandler)

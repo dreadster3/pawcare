@@ -3,9 +3,9 @@ package mongo
 import (
 	"context"
 
-	"github.com/dreadster3/pawcare/services/account/aggregate"
+	ownerdomain "github.com/dreadster3/pawcare/services/account/owner/domain"
+	"github.com/dreadster3/pawcare/services/account/pet/domain"
 	"github.com/dreadster3/pawcare/services/account/repository"
-	"github.com/dreadster3/pawcare/services/account/valueobjects"
 	"github.com/dreadster3/pawcare/shared/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -27,18 +27,18 @@ type pet struct {
 	Gender      string             `bson:"gender"`
 }
 
-func (p *pet) ToModel() *aggregate.Pet {
-	petProfile := valueobjects.NewPetProfile(p.Name, p.DateOfBirth.Time(), p.Species, p.Breed, p.Weight, valueobjects.EGender(p.Gender))
-	pet := aggregate.NewPet(aggregate.OwnerId(p.OwnerId.Hex()), petProfile)
-	pet.Id = aggregate.PetId(p.Id.Hex())
+func (p *pet) ToModel() *domain.Pet {
+	petProfile := domain.NewPetProfile(p.Name, p.DateOfBirth.Time(), p.Species, p.Breed, p.Weight, domain.EGender(p.Gender))
+	pet := domain.NewPet(ownerdomain.OwnerId(p.OwnerId.Hex()), petProfile)
+	pet.Id = domain.PetId(p.Id.Hex())
 	return pet
 }
 
-func toPetModel(p pet) *aggregate.Pet {
+func toPetModel(p pet) *domain.Pet {
 	return p.ToModel()
 }
 
-func fromPetModel(p aggregate.Pet) (*pet, error) {
+func fromPetModel(p domain.Pet) (*pet, error) {
 	id, err := primitive.ObjectIDFromHex(string(p.Id))
 	if err != nil {
 		if err != primitive.ErrInvalidHex {
@@ -68,7 +68,7 @@ type petRepository struct {
 	db *mongo.Database
 }
 
-func NewPetRepository(db *mongo.Database) repository.IPetRepository {
+func NewPetRepository(db *mongo.Database) domain.IPetRepository {
 	return &petRepository{db}
 }
 
@@ -76,7 +76,7 @@ func (r *petRepository) Collection() *mongo.Collection {
 	return r.db.Collection(PetCollection)
 }
 
-func (r *petRepository) FindById(ctx context.Context, id aggregate.PetId) (*aggregate.Pet, error) {
+func (r *petRepository) FindById(ctx context.Context, id domain.PetId) (*domain.Pet, error) {
 	objectId, err := primitive.ObjectIDFromHex(string(id))
 	if err != nil {
 		return nil, err
@@ -93,7 +93,7 @@ func (r *petRepository) FindById(ctx context.Context, id aggregate.PetId) (*aggr
 	return result.ToModel(), nil
 }
 
-func (r *petRepository) FindByOwnerId(ctx context.Context, id aggregate.OwnerId) ([]*aggregate.Pet, error) {
+func (r *petRepository) FindByOwnerId(ctx context.Context, id ownerdomain.OwnerId) ([]*domain.Pet, error) {
 	objectId, err := primitive.ObjectIDFromHex(string(id))
 	if err != nil {
 		return nil, err
@@ -115,7 +115,7 @@ func (r *petRepository) FindByOwnerId(ctx context.Context, id aggregate.OwnerId)
 	return utils.Map(result, toPetModel), nil
 }
 
-func (r *petRepository) Create(ctx context.Context, pet *aggregate.Pet) error {
+func (r *petRepository) Create(ctx context.Context, pet *domain.Pet) error {
 	entity, err := fromPetModel(*pet)
 	if err != nil {
 		return err
@@ -126,11 +126,11 @@ func (r *petRepository) Create(ctx context.Context, pet *aggregate.Pet) error {
 		return err
 	}
 
-	pet.Id = aggregate.PetId(result.InsertedID.(primitive.ObjectID).Hex())
+	pet.Id = domain.PetId(result.InsertedID.(primitive.ObjectID).Hex())
 	return nil
 }
 
-func (r *petRepository) Update(ctx context.Context, pet *aggregate.Pet) error {
+func (r *petRepository) Update(ctx context.Context, pet *domain.Pet) error {
 	entity, err := fromPetModel(*pet)
 	if err != nil {
 		return err

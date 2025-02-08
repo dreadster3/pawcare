@@ -1,4 +1,4 @@
-package ownerservice
+package service
 
 import "errors"
 

@@ -3,9 +3,8 @@ package mongo
 import (
 	"context"
 
-	"github.com/dreadster3/pawcare/services/account/aggregate"
+	"github.com/dreadster3/pawcare/services/account/owner/domain"
 	"github.com/dreadster3/pawcare/services/account/repository"
-	"github.com/dreadster3/pawcare/services/account/valueobjects"
 	"github.com/dreadster3/pawcare/services/auth"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -23,14 +22,14 @@ type owner struct {
 	DateOfBirth primitive.DateTime `bson:"date_of_birth"`
 }
 
-func (o *owner) ToModel() *aggregate.Owner {
-	ownerProfile := valueobjects.NewOwnerProfile(o.Name, o.DateOfBirth.Time())
-	owner := aggregate.NewOwner(auth.UserId(o.UserId.Hex()), ownerProfile)
-	owner.Id = aggregate.OwnerId(o.Id.Hex())
+func (o *owner) ToModel() *domain.Owner {
+	ownerProfile := domain.NewOwnerProfile(o.Name, o.DateOfBirth.Time())
+	owner := domain.NewOwner(auth.UserId(o.UserId.Hex()), ownerProfile)
+	owner.Id = domain.OwnerId(o.Id.Hex())
 	return owner
 }
 
-func fromOwnerModel(o aggregate.Owner) (*owner, error) {
+func fromOwnerModel(o domain.Owner) (*owner, error) {
 	id, err := primitive.ObjectIDFromHex(string(o.Id))
 	if err != nil {
 		if err != primitive.ErrInvalidHex {
@@ -56,7 +55,7 @@ type ownerRepository struct {
 	db *mongo.Database
 }
 
-func NewOwnerRepository(db *mongo.Database) repository.IOwnerRepository {
+func NewOwnerRepository(db *mongo.Database) domain.IOwnerRepository {
 	return &ownerRepository{db}
 }
 
@@ -64,7 +63,7 @@ func (r *ownerRepository) Collection() *mongo.Collection {
 	return r.db.Collection(OwnerCollection)
 }
 
-func (r *ownerRepository) FindById(ctx context.Context, id aggregate.OwnerId) (*aggregate.Owner, error) {
+func (r *ownerRepository) FindById(ctx context.Context, id domain.OwnerId) (*domain.Owner, error) {
 	objectId, err := primitive.ObjectIDFromHex(string(id))
 	if err != nil {
 		return nil, err
@@ -82,7 +81,7 @@ func (r *ownerRepository) FindById(ctx context.Context, id aggregate.OwnerId) (*
 	return result.ToModel(), nil
 }
 
-func (r *ownerRepository) FindByUserId(ctx context.Context, id auth.UserId) (*aggregate.Owner, error) {
+func (r *ownerRepository) FindByUserId(ctx context.Context, id auth.UserId) (*domain.Owner, error) {
 	objectId, err := primitive.ObjectIDFromHex(string(id))
 	if err != nil {
 		return nil, err
@@ -100,7 +99,7 @@ func (r *ownerRepository) FindByUserId(ctx context.Context, id auth.UserId) (*ag
 	return result.ToModel(), nil
 }
 
-func (r *ownerRepository) Create(ctx context.Context, owner *aggregate.Owner) error {
+func (r *ownerRepository) Create(ctx context.Context, owner *domain.Owner) error {
 	entity, err := fromOwnerModel(*owner)
 	if err != nil {
 		return err
@@ -111,11 +110,11 @@ func (r *ownerRepository) Create(ctx context.Context, owner *aggregate.Owner) er
 		return err
 	}
 
-	owner.Id = aggregate.OwnerId(result.InsertedID.(primitive.ObjectID).Hex())
+	owner.Id = domain.OwnerId(result.InsertedID.(primitive.ObjectID).Hex())
 	return nil
 }
 
-func (r *ownerRepository) Update(ctx context.Context, owner *aggregate.Owner) error {
+func (r *ownerRepository) Update(ctx context.Context, owner *domain.Owner) error {
 	entity, err := fromOwnerModel(*owner)
 	if err != nil {
 		return err

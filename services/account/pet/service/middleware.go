@@ -1,8 +1,8 @@
-package petservice
+package service
 
 import (
-	"github.com/dreadster3/pawcare/services/account/aggregate"
-	"github.com/dreadster3/pawcare/services/account/valueobjects"
+	ownerdomain "github.com/dreadster3/pawcare/services/account/owner/domain"
+	"github.com/dreadster3/pawcare/services/account/pet/domain"
 	"github.com/go-kit/log"
 	"golang.org/x/net/context"
 )
@@ -20,21 +20,21 @@ func newLoggingMiddleware(logger log.Logger) middleware {
 	}
 }
 
-func (mw *loggingMiddleware) FindById(ctx context.Context, id aggregate.PetId) (pet *aggregate.Pet, err error) {
+func (mw *loggingMiddleware) FindById(ctx context.Context, id domain.PetId) (pet *domain.Pet, err error) {
 	defer func() {
 		mw.logger.Log("method", "FindById", "id", id, "pet", pet, "err", err)
 	}()
 	return mw.next.FindById(ctx, id)
 }
 
-func (mw *loggingMiddleware) FindByOwnerId(ctx context.Context, ownerId aggregate.OwnerId) (pet []*aggregate.Pet, err error) {
+func (mw *loggingMiddleware) FindByOwnerId(ctx context.Context, ownerId ownerdomain.OwnerId) (pet []*domain.Pet, err error) {
 	defer func() {
 		mw.logger.Log("method", "FindByOwnerId", "id", ownerId, "pet", pet, "err", err)
 	}()
 	return mw.next.FindByOwnerId(ctx, ownerId)
 }
 
-func (mw *loggingMiddleware) Create(ctx context.Context, ownerId aggregate.OwnerId, petProfile valueobjects.PetProfile) (pet *aggregate.Pet, err error) {
+func (mw *loggingMiddleware) Create(ctx context.Context, ownerId ownerdomain.OwnerId, petProfile domain.PetProfile) (pet *domain.Pet, err error) {
 	defer func() {
 		mw.logger.Log("method", "Create", "ownerId", ownerId, "pet", pet, "err", err)
 	}()
@@ -42,7 +42,7 @@ func (mw *loggingMiddleware) Create(ctx context.Context, ownerId aggregate.Owner
 	return mw.next.Create(ctx, ownerId, petProfile)
 }
 
-func (mw *loggingMiddleware) Update(ctx context.Context, pet *aggregate.Pet) (p *aggregate.Pet, err error) {
+func (mw *loggingMiddleware) Update(ctx context.Context, pet *domain.Pet) (p *domain.Pet, err error) {
 	defer func() {
 		mw.logger.Log("method", "Update", "pet", pet, "err", err)
 	}()
