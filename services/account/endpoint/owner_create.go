@@ -1,10 +1,9 @@
-package ownerendpoints
+package endpoint
 
 import (
 	"context"
 	"time"
 
-	"github.com/dreadster3/pawcare/services/account/endpoints"
 	ownerservice "github.com/dreadster3/pawcare/services/account/service/owner"
 	"github.com/dreadster3/pawcare/services/account/valueobjects"
 	"github.com/dreadster3/pawcare/services/auth"
@@ -15,21 +14,21 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
-type CreateOwnerRequest struct {
+type OwnerCreateRequest struct {
 	Name        string    `json:"name" validate:"required"`
 	DateOfBirth time.Time `json:"date_of_birth" validate:"required"`
 }
 
-type CreateOwnerResponse struct {
+type OwnerCreateResponse struct {
 	Id   string `json:"id"`
 	Name string `json:"name"`
 }
 
-func MakeCreateOwnerEndpoint(ownerService ownerservice.IOwnerService) endpoint.Endpoint {
+func makeOwnerCreateEndpoint(ownerService ownerservice.IOwnerService) endpoint.Endpoint {
 	return func(context context.Context, request interface{}) (interface{}, error) {
-		req, ok := request.(CreateOwnerRequest)
+		req, ok := request.(OwnerCreateRequest)
 		if !ok {
-			return nil, endpoints.ErrCastRequest
+			return nil, ErrCastRequest
 		}
 
 		err := validator.New().Struct(req)
@@ -39,7 +38,7 @@ func MakeCreateOwnerEndpoint(ownerService ownerservice.IOwnerService) endpoint.E
 
 		claims, ok := context.Value(kitjwt.JWTClaimsContextKey).(*jwt.StandardClaims)
 		if !ok {
-			return nil, endpoints.ErrParsingClaims
+			return nil, ErrParsingClaims
 		}
 
 		userId := auth.UserId(claims.Subject)
@@ -49,6 +48,6 @@ func MakeCreateOwnerEndpoint(ownerService ownerservice.IOwnerService) endpoint.E
 			return nil, err
 		}
 
-		return CreateOwnerResponse{string(owner.Id), owner.Profile.Name}, nil
+		return OwnerCreateResponse{string(owner.Id), owner.Profile.Name}, nil
 	}
 }

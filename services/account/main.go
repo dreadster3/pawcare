@@ -18,9 +18,9 @@ import (
 	"github.com/dreadster3/pawcare/services/account/endpoint"
 	"github.com/dreadster3/pawcare/services/account/proto"
 	"github.com/dreadster3/pawcare/services/account/repository/mongo"
-	ownerservice "github.com/dreadster3/pawcare/services/account/service/owner_service"
+	ownerservice "github.com/dreadster3/pawcare/services/account/service/owner"
+	petservice "github.com/dreadster3/pawcare/services/account/service/pet"
 	"github.com/dreadster3/pawcare/services/account/transport"
-	"github.com/dreadster3/pawcare/services/auth"
 	"github.com/dreadster3/pawcare/shared/db/mongodb"
 	kitlog "github.com/go-kit/log"
 
@@ -63,10 +63,11 @@ func _main() error {
 	logger = kitlog.With(logger, "ts", kitlog.DefaultTimestampUTC)
 
 	ownerRepository := mongo.NewOwnerRepository(db)
+	petRepository := mongo.NewPetRepository(db)
 
-	userService := auth.NewUserService(kitlog.With(logger, "service", "user"))
-	ownerService := ownerservice.NewOwnerService(ownerRepository, userService, kitlog.With(logger, "service", "owner"))
-	endpoints := endpoint.NewSet(ownerService, logger)
+	ownerService := ownerservice.NewOwnerService(ownerRepository, kitlog.With(logger, "service", "owner"))
+	petService := petservice.NewPetService(petRepository, kitlog.With(logger, "service", "pet"))
+	endpoints := endpoint.NewSet(ownerService, petService, logger)
 
 	httpHandler := transport.MakeHTTPHandler(endpoints, logger)
 	httpHandler = accessControl(httpHandler)

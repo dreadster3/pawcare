@@ -16,13 +16,12 @@ type IPetService interface {
 }
 
 type petService struct {
-	ownerRepository repository.IOwnerRepository
-	petRepository   repository.IPetRepository
+	petRepository repository.IPetRepository
 }
 
-func NewPetService(logger log.Logger, ownerRepository repository.IOwnerRepository, petRepository repository.IPetRepository) IPetService {
+func NewPetService(petRepository repository.IPetRepository, logger log.Logger) IPetService {
 	var svc IPetService
-	svc = &petService{ownerRepository: ownerRepository, petRepository: petRepository}
+	svc = &petService{petRepository: petRepository}
 	svc = newLoggingMiddleware(logger)(svc)
 
 	return svc

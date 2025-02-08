@@ -24,9 +24,16 @@ func MakeHTTPHandler(endpoints endpoint.Set, logger kitlog.Logger) http.Handler 
 
 	authenticatedOpts := append(opts, kithttp.ServerBefore(kitjwt.HTTPToContext()))
 
-	createOwnerHandler := kithttp.NewServer(
-		endpoints.CreateOwnerEndpoint,
-		decodeCreateOwnerRequest,
+	ownerCreateHandler := kithttp.NewServer(
+		endpoints.OwnerCreateEndpoint,
+		decodeJSONRequest[endpoint.OwnerCreateRequest],
+		encodeResponse,
+		authenticatedOpts...,
+	)
+
+	petCreateHandler := kithttp.NewServer(
+		endpoints.PetCreateEndpoint,
+		decodeJSONRequest[endpoint.PetCreateRequest],
 		encodeResponse,
 		authenticatedOpts...,
 	)
@@ -35,13 +42,16 @@ func MakeHTTPHandler(endpoints endpoint.Set, logger kitlog.Logger) http.Handler 
 	apiGroup := engine.Group("/api/v1")
 
 	ownersGroup := apiGroup.Group("/owners")
-	ownersGroup.Handle("POST", "/", gin.WrapH(createOwnerHandler))
+	ownersGroup.Handle("POST", "/", gin.WrapH(ownerCreateHandler))
+
+	petsGroup := apiGroup.Group("/pets")
+	petsGroup.Handle("POST", "/", gin.WrapH(petCreateHandler))
 
 	return engine.Handler()
 }
 
-func decodeCreateOwnerRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	var request endpoint.CreateOwnerRequest
+func decodeJSONRequest[T any](_ context.Context, r *http.Request) (interface{}, error) {
+	var request T
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
 		return nil, err
 	}

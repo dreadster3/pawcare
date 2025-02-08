@@ -19,14 +19,12 @@ type IOwnerService interface {
 
 type ownerService struct {
 	ownerRepository repository.IOwnerRepository
-	userService     auth.IUserService
 }
 
-func NewOwnerService(ownerRepository repository.IOwnerRepository, userService auth.IUserService, logger log.Logger) IOwnerService {
+func NewOwnerService(ownerRepository repository.IOwnerRepository, logger log.Logger) IOwnerService {
 	var svc IOwnerService
 	svc = &ownerService{
 		ownerRepository: ownerRepository,
-		userService:     userService,
 	}
 	svc = newLoggingMiddleware(logger)(svc)
 	svc = newValidationMiddleware()(svc)
