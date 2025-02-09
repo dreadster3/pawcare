@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/dreadster3/pawcare/services/account/endpoint"
+	"github.com/dreadster3/pawcare/services/account/pet/endpoint"
 	"github.com/dreadster3/pawcare/services/account/repository"
 	"github.com/dreadster3/pawcare/shared/models"
 	"github.com/gin-gonic/gin"
@@ -16,7 +16,7 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
-func MakeHTTPHandler(endpoints endpoint.Set, logger kitlog.Logger) http.Handler {
+func RegisterHTTPRoutes(r *gin.RouterGroup, endpoints endpoint.Set, logger kitlog.Logger) {
 	opts := []kithttp.ServerOption{
 		kithttp.ServerErrorHandler(kittransport.NewLogErrorHandler(logger)),
 		kithttp.ServerErrorEncoder(encodeError),
@@ -24,30 +24,15 @@ func MakeHTTPHandler(endpoints endpoint.Set, logger kitlog.Logger) http.Handler 
 
 	authenticatedOpts := append(opts, kithttp.ServerBefore(kitjwt.HTTPToContext()))
 
-	ownerCreateHandler := kithttp.NewServer(
-		endpoints.OwnerCreateEndpoint,
-		decodeJSONRequest[endpoint.OwnerCreateRequest],
-		encodeResponse,
-		authenticatedOpts...,
-	)
-
 	petCreateHandler := kithttp.NewServer(
-		endpoints.PetCreateEndpoint,
+		endpoints.CreateEndpoint,
 		decodeJSONRequest[endpoint.PetCreateRequest],
 		encodeResponse,
 		authenticatedOpts...,
 	)
 
-	engine := gin.Default()
-	apiGroup := engine.Group("/api/v1")
-
-	ownersGroup := apiGroup.Group("/owners")
-	ownersGroup.Handle("POST", "/", gin.WrapH(ownerCreateHandler))
-
-	petsGroup := apiGroup.Group("/pets")
+	petsGroup := r.Group("/pets")
 	petsGroup.Handle("POST", "/", gin.WrapH(petCreateHandler))
-
-	return engine.Handler()
 }
 
 func decodeJSONRequest[T any](_ context.Context, r *http.Request) (interface{}, error) {

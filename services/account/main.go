@@ -12,14 +12,12 @@ import (
 	"syscall"
 
 	"github.com/oklog/oklog/pkg/group"
-	"google.golang.org/grpc"
 
 	"github.com/dreadster3/pawcare/services/account/config"
 	ownerendpoint "github.com/dreadster3/pawcare/services/account/owner/endpoint"
 	ownerservice "github.com/dreadster3/pawcare/services/account/owner/service"
 	petendpoint "github.com/dreadster3/pawcare/services/account/pet/endpoint"
 	petservice "github.com/dreadster3/pawcare/services/account/pet/service"
-	"github.com/dreadster3/pawcare/services/account/proto"
 	"github.com/dreadster3/pawcare/services/account/repository/mongo"
 	"github.com/dreadster3/pawcare/services/account/transport"
 	"github.com/dreadster3/pawcare/shared/db/mongodb"
@@ -69,12 +67,12 @@ func _main() error {
 	ownerService := ownerservice.NewOwnerService(ownerRepository, kitlog.With(logger, "service", "owner"))
 	petService := petservice.NewPetService(petRepository, kitlog.With(logger, "service", "pet"))
 	ownerEndpoints := ownerendpoint.NewSet(ownerService, logger)
-	petEndpoints := petendpoint.NewSet(petService, logger)
+	petEndpoints := petendpoint.NewSet(ownerService, petService, logger)
 
-	httpHandler := transport.MakeHTTPHandler(endpoints, logger)
+	httpHandler := transport.MakeHTTPServer(ownerEndpoints, petEndpoints, logger)
 	httpHandler = accessControl(httpHandler)
 
-	grpcHandler := transport.NewGRPCServer(endpoints, logger)
+	// grpcHandler := transport.NewGRPCServer(endpoints, logger)
 
 	var g group.Group
 
@@ -95,24 +93,24 @@ func _main() error {
 		})
 	}
 
-	{
-		grpcAddr := fmt.Sprintf(":%s", viper.GetString(config.GRPCPortKey))
-		logger := kitlog.With(logger, "transport", "grpc")
-		grpcListenAddr, err := net.Listen("tcp", grpcAddr)
-		if err != nil {
-			return err
-		}
-
-		g.Add(func() error {
-			server := grpc.NewServer()
-			proto.RegisterOwnerServiceServer(server, grpcHandler)
-			logger.Log("msg", "Starting server", "addr", grpcAddr)
-			return server.Serve(grpcListenAddr)
-		}, func(err error) {
-			logger.Log("msg", "Closing server", "reason", err)
-			grpcListenAddr.Close()
-		})
-	}
+	// {
+	// 	grpcAddr := fmt.Sprintf(":%s", viper.GetString(config.GRPCPortKey))
+	// 	logger := kitlog.With(logger, "transport", "grpc")
+	// 	grpcListenAddr, err := net.Listen("tcp", grpcAddr)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	//
+	// 	g.Add(func() error {
+	// 		server := grpc.NewServer()
+	// 		proto.RegisterOwnerServiceServer(server, grpcHandler)
+	// 		logger.Log("msg", "Starting server", "addr", grpcAddr)
+	// 		return server.Serve(grpcListenAddr)
+	// 	}, func(err error) {
+	// 		logger.Log("msg", "Closing server", "reason", err)
+	// 		grpcListenAddr.Close()
+	// 	})
+	// }
 
 	g.Add(func() error {
 		c := make(chan os.Signal, 1)
