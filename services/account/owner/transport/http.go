@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/dreadster3/pawcare/services/account/owner/endpoint"
+	"github.com/dreadster3/pawcare/services/account/owner/service"
 	"github.com/dreadster3/pawcare/services/account/repository"
 	"github.com/dreadster3/pawcare/shared/models"
 	"github.com/gin-gonic/gin"
@@ -26,13 +27,21 @@ func RegisterHTTPRoutes(r *gin.RouterGroup, endpoints endpoint.Set, logger kitlo
 
 	ownerCreateHandler := kithttp.NewServer(
 		endpoints.CreateEndpoint,
-		decodeJSONRequest[endpoint.OwnerCreateRequest],
+		decodeJSONRequest[endpoint.CreateRequest],
+		encodeResponse,
+		authenticatedOpts...,
+	)
+
+	getHandler := kithttp.NewServer(
+		endpoints.GetEndpoint,
+		decodeGetRequest,
 		encodeResponse,
 		authenticatedOpts...,
 	)
 
 	ownersGroup := r.Group("/owners")
 	ownersGroup.Handle("POST", "/", gin.WrapH(ownerCreateHandler))
+	ownersGroup.Handle("GET", "/", gin.WrapH(getHandler))
 }
 
 func decodeJSONRequest[T any](_ context.Context, r *http.Request) (interface{}, error) {
@@ -43,6 +52,10 @@ func decodeJSONRequest[T any](_ context.Context, r *http.Request) (interface{}, 
 	return request, nil
 }
 
+func decodeGetRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	return nil, nil
+}
+
 func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	switch err {
@@ -50,6 +63,10 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 		w.WriteHeader(http.StatusUnauthorized)
 	case repository.ErrAlreadyCreated:
 		w.WriteHeader(http.StatusConflict)
+	case repository.ErrNotFound:
+		w.WriteHeader(http.StatusNotFound)
+	case service.ErrInvalidDate:
+		w.WriteHeader(http.StatusBadRequest)
 	default:
 		w.WriteHeader(http.StatusInternalServerError)
 	}

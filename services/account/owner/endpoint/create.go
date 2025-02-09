@@ -15,19 +15,19 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
-type OwnerCreateRequest struct {
+type CreateRequest struct {
 	Name        string    `json:"name" validate:"required"`
 	DateOfBirth time.Time `json:"date_of_birth" validate:"required"`
 }
 
-type OwnerCreateResponse struct {
+type CreateResponse struct {
 	Id   string `json:"id"`
 	Name string `json:"name"`
 }
 
-func makeOwnerCreateEndpoint(ownerService service.IOwnerService) endpoint.Endpoint {
+func makeCreateEndpoint(ownerService service.IOwnerService) endpoint.Endpoint {
 	return func(context context.Context, request interface{}) (interface{}, error) {
-		req, ok := request.(OwnerCreateRequest)
+		req, ok := request.(CreateRequest)
 		if !ok {
 			return nil, common.ErrCastRequest
 		}
@@ -49,6 +49,6 @@ func makeOwnerCreateEndpoint(ownerService service.IOwnerService) endpoint.Endpoi
 			return nil, err
 		}
 
-		return OwnerCreateResponse{string(owner.Id), owner.Profile.Name}, nil
+		return CreateResponse{string(owner.Id), owner.Profile.Name}, nil
 	}
 }

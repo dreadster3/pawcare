@@ -10,6 +10,7 @@ import (
 
 type Set struct {
 	CreateEndpoint endpoint.Endpoint
+	GetEndpoint    endpoint.Endpoint
 }
 
 func NewSet(ownerService service.IOwnerService, logger log.Logger) Set {
@@ -17,11 +18,18 @@ func NewSet(ownerService service.IOwnerService, logger log.Logger) Set {
 
 	var createEndpoint endpoint.Endpoint
 	{
-		createEndpoint = makeOwnerCreateEndpoint(ownerService)
+		createEndpoint = makeCreateEndpoint(ownerService)
 		createEndpoint = kitjwt.NewParser(kf, jwt.SigningMethodHS256, kitjwt.StandardClaimsFactory)(createEndpoint)
+	}
+
+	var getEndpoint endpoint.Endpoint
+	{
+		getEndpoint = makeGetEndpoint(ownerService)
+		getEndpoint = kitjwt.NewParser(kf, jwt.SigningMethodHS256, kitjwt.StandardClaimsFactory)(getEndpoint)
 	}
 
 	return Set{
 		CreateEndpoint: createEndpoint,
+		GetEndpoint:    getEndpoint,
 	}
 }
