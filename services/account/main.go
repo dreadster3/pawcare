@@ -1,5 +1,3 @@
-//go:generate protoc ./proto/account.proto --go_out=paths=source_relative:. --go-grpc_out=paths=source_relative:.
-
 package main
 
 import (
@@ -73,8 +71,6 @@ func _main() error {
 	httpHandler := transport.MakeHTTPServer(ownerEndpoints, petEndpoints, kitlog.With(logger, "transport", "http"))
 	httpHandler = accessControl(httpHandler)
 
-	// grpcHandler := transport.NewGRPCServer(endpoints, logger)
-
 	var g group.Group
 
 	{
@@ -94,24 +90,23 @@ func _main() error {
 		})
 	}
 
-	// {
-	// 	grpcAddr := fmt.Sprintf(":%s", viper.GetString(config.GRPCPortKey))
-	// 	logger := kitlog.With(logger, "transport", "grpc")
-	// 	grpcListenAddr, err := net.Listen("tcp", grpcAddr)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	//
-	// 	g.Add(func() error {
-	// 		server := grpc.NewServer()
-	// 		proto.RegisterOwnerServiceServer(server, grpcHandler)
-	// 		logger.Log("msg", "Starting server", "addr", grpcAddr)
-	// 		return server.Serve(grpcListenAddr)
-	// 	}, func(err error) {
-	// 		logger.Log("msg", "Closing server", "reason", err)
-	// 		grpcListenAddr.Close()
-	// 	})
-	// }
+	{
+		grpcAddr := fmt.Sprintf(":%s", viper.GetString(config.GRPCPortKey))
+		logger := kitlog.With(logger, "transport", "grpc")
+		grpcListenAddr, err := net.Listen("tcp", grpcAddr)
+		if err != nil {
+			return err
+		}
+
+		g.Add(func() error {
+			server := transport.NewGRPCServer(ownerEndpoints, petEndpoints, logger)
+			logger.Log("msg", "Starting server", "addr", grpcAddr)
+			return server.Serve(grpcListenAddr)
+		}, func(err error) {
+			logger.Log("msg", "Closing server", "reason", err)
+			grpcListenAddr.Close()
+		})
+	}
 
 	g.Add(func() error {
 		c := make(chan os.Signal, 1)

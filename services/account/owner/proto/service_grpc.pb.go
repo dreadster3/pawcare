@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.3.0
 // - protoc             v5.28.2
-// source: proto/account.proto
+// source: service.proto
 
 package proto
 
@@ -11,6 +11,7 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -26,7 +27,7 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type OwnerServiceClient interface {
-	Get(ctx context.Context, in *OwnerServiceGetRequest, opts ...grpc.CallOption) (*OwnerServiceGetResponse, error)
+	Get(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetResponse, error)
 }
 
 type ownerServiceClient struct {
@@ -37,8 +38,8 @@ func NewOwnerServiceClient(cc grpc.ClientConnInterface) OwnerServiceClient {
 	return &ownerServiceClient{cc}
 }
 
-func (c *ownerServiceClient) Get(ctx context.Context, in *OwnerServiceGetRequest, opts ...grpc.CallOption) (*OwnerServiceGetResponse, error) {
-	out := new(OwnerServiceGetResponse)
+func (c *ownerServiceClient) Get(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetResponse, error) {
+	out := new(GetResponse)
 	err := c.cc.Invoke(ctx, OwnerService_Get_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -50,7 +51,7 @@ func (c *ownerServiceClient) Get(ctx context.Context, in *OwnerServiceGetRequest
 // All implementations must embed UnimplementedOwnerServiceServer
 // for forward compatibility
 type OwnerServiceServer interface {
-	Get(context.Context, *OwnerServiceGetRequest) (*OwnerServiceGetResponse, error)
+	Get(context.Context, *emptypb.Empty) (*GetResponse, error)
 	mustEmbedUnimplementedOwnerServiceServer()
 }
 
@@ -58,7 +59,7 @@ type OwnerServiceServer interface {
 type UnimplementedOwnerServiceServer struct {
 }
 
-func (UnimplementedOwnerServiceServer) Get(context.Context, *OwnerServiceGetRequest) (*OwnerServiceGetResponse, error) {
+func (UnimplementedOwnerServiceServer) Get(context.Context, *emptypb.Empty) (*GetResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
 }
 func (UnimplementedOwnerServiceServer) mustEmbedUnimplementedOwnerServiceServer() {}
@@ -75,7 +76,7 @@ func RegisterOwnerServiceServer(s grpc.ServiceRegistrar, srv OwnerServiceServer)
 }
 
 func _OwnerService_Get_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(OwnerServiceGetRequest)
+	in := new(emptypb.Empty)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -87,7 +88,7 @@ func _OwnerService_Get_Handler(srv interface{}, ctx context.Context, dec func(in
 		FullMethod: OwnerService_Get_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OwnerServiceServer).Get(ctx, req.(*OwnerServiceGetRequest))
+		return srv.(OwnerServiceServer).Get(ctx, req.(*emptypb.Empty))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -105,5 +106,5 @@ var OwnerService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "proto/account.proto",
+	Metadata: "service.proto",
 }

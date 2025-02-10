@@ -1,20 +1,60 @@
 package transport
 
 import (
-	"github.com/dreadster3/pawcare/services/account/proto"
+	"context"
+
+	"github.com/dreadster3/pawcare/services/account/owner/endpoint"
+	"github.com/dreadster3/pawcare/services/account/owner/proto"
+	"github.com/dreadster3/pawcare/shared/common"
+	kitjwt "github.com/go-kit/kit/auth/jwt"
 	"github.com/go-kit/kit/transport"
-	grpctransport "github.com/go-kit/kit/transport/grpc"
+	"github.com/go-kit/kit/transport/grpc"
 	"github.com/go-kit/log"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 type grpcServer struct {
 	proto.UnimplementedOwnerServiceServer
+
+	get grpc.Handler
 }
 
-func NewGRPCServer(logger log.Logger) proto.OwnerServiceServer {
-	_ = []grpctransport.ServerOption{
-		grpctransport.ServerErrorHandler(transport.NewLogErrorHandler(logger)),
+func NewGRPCServer(endpoints endpoint.Set, logger log.Logger) proto.OwnerServiceServer {
+	options := []grpc.ServerOption{
+		grpc.ServerErrorHandler(transport.NewLogErrorHandler(logger)),
+		grpc.ServerBefore(kitjwt.GRPCToContext()),
 	}
 
-	return &grpcServer{}
+	getHandler := grpc.NewServer(
+		endpoints.GetEndpoint,
+		common.GRPCDecodeNoBody,
+		encodeGetResponse,
+		options...,
+	)
+
+	return &grpcServer{
+		get: getHandler,
+	}
+}
+
+func (srv *grpcServer) Get(ctx context.Context, req *emptypb.Empty) (*proto.GetResponse, error) {
+	_, res, err := srv.get.ServeGRPC(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return res.(*proto.GetResponse), nil
+}
+
+func encodeGetResponse(_ context.Context, res interface{}) (interface{}, error) {
+	response, ok := res.(endpoint.GetResponse)
+	if !ok {
+		return nil, common.ErrCastResponse
+	}
+
+	return &proto.GetResponse{
+		Id:          response.Id,
+		Name:        response.Name,
+		DateOfBirth: response.DateOfBirth.String(),
+	}, nil
 }

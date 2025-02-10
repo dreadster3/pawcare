@@ -27,21 +27,21 @@ func RegisterHTTPRoutes(r *mux.Router, endpoints endpoint.Set, logger kitlog.Log
 
 	createHandler := kithttp.NewServer(
 		endpoints.CreateEndpoint,
-		decodeJSONRequest[endpoint.CreateRequest],
+		common.DecodeJSONRequest[endpoint.CreateRequest],
 		encodeResponse,
 		authenticatedOpts...,
 	)
 
 	getAllHandler := kithttp.NewServer(
 		endpoints.GetAllEndpoint,
-		decodeGetRequest,
+		common.DecodeNoBodyRequest,
 		encodeResponse,
 		authenticatedOpts...,
 	)
 
 	getHandler := kithttp.NewServer(
 		endpoints.GetEndpoint,
-		decodeGetByIdRequest,
+		common.DecodePathParameters[endpoint.GetRequest],
 		encodeResponse,
 		authenticatedOpts...,
 	)
@@ -50,28 +50,6 @@ func RegisterHTTPRoutes(r *mux.Router, endpoints endpoint.Set, logger kitlog.Log
 	router.Methods("POST").Path("").Handler(createHandler)
 	router.Methods("GET").Path("").Handler(getAllHandler)
 	router.Methods("GET").Path("/{id}").Handler(getHandler)
-}
-
-func decodeGetRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	return nil, nil
-}
-
-func decodeGetByIdRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	vars := mux.Vars(r)
-	id, ok := vars["id"]
-	if !ok {
-		return nil, common.ErrCastRequest
-	}
-
-	return endpoint.GetRequest{Id: id}, nil
-}
-
-func decodeJSONRequest[T any](_ context.Context, r *http.Request) (interface{}, error) {
-	var request T
-	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-		return nil, err
-	}
-	return request, nil
 }
 
 func encodeError(_ context.Context, err error, w http.ResponseWriter) {
