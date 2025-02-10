@@ -2,8 +2,8 @@ package endpoint
 
 import (
 	"context"
-	"time"
 
+	ownerservice "github.com/dreadster3/pawcare/services/account/owner/service"
 	"github.com/dreadster3/pawcare/services/account/pet/domain"
 	petservice "github.com/dreadster3/pawcare/services/account/pet/service"
 	"github.com/dreadster3/pawcare/services/auth"
@@ -14,23 +14,20 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
-type CreateRequest struct {
-	Name        string         `json:"name" validate:"required"`
-	DateOfBirth time.Time      `json:"date_of_birth" validate:"required"`
-	Species     string         `json:"species" validate:"required"`
-	Breed       string         `json:"breed" validate:"required"`
-	Weight      float64        `json:"weight" validate:"required"`
-	Gender      domain.EGender `json:"gender" validate:"required"`
+type GetRequest struct {
+	Id string `json:"id" validate:"required"`
 }
 
-type CreateResponse struct {
-	Id   string `json:"id"`
-	Name string `json:"name"`
+type GetResponse struct {
+	Id      string `json:"id"`
+	Name    string `json:"name"`
+	Species string `json:"species"`
+	Breed   string `json:"breed"`
 }
 
-func makePetCreateEndpoint(petService petservice.IPetService) endpoint.Endpoint {
+func makeGetEndpoint(ownerService ownerservice.IOwnerService, petService petservice.IPetService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
-		req, ok := request.(CreateRequest)
+		req, ok := request.(GetRequest)
 		if !ok {
 			return nil, common.ErrCastRequest
 		}
@@ -45,15 +42,25 @@ func makePetCreateEndpoint(petService petservice.IPetService) endpoint.Endpoint 
 		}
 
 		userId := auth.UserId(claims.Subject)
-		profile := domain.NewPetProfile(req.Name, req.DateOfBirth, req.Species, req.Breed, req.Weight, req.Gender)
-		pet, err := petService.Create(ctx, userId, profile)
+		owner, err := ownerService.FindByUserId(ctx, userId)
 		if err != nil {
 			return nil, err
 		}
 
-		return CreateResponse{
+		pet, err := petService.FindById(ctx, domain.PetId(req.Id))
+		if err != nil {
+			return nil, err
+		}
+
+		if owner.Id != pet.OwnerId {
+			return nil, common.ErrUnauthorized
+		}
+
+		return GetResponse{
 			string(pet.Id),
 			pet.Profile.Name,
+			pet.Profile.Species,
+			pet.Profile.Breed,
 		}, nil
 	}
 }

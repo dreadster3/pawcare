@@ -61,15 +61,16 @@ func _main() error {
 	logger := kitlog.NewLogfmtLogger(kitlog.NewSyncWriter(os.Stderr))
 	logger = kitlog.With(logger, "ts", kitlog.DefaultTimestampUTC)
 
-	ownerRepository := mongo.NewOwnerRepository(db)
+	ownerRepository := mongo.NewOwnerRepository(db, kitlog.With(logger, "repository", "owner"))
 	petRepository := mongo.NewPetRepository(db)
 
 	ownerService := ownerservice.NewOwnerService(ownerRepository, kitlog.With(logger, "service", "owner"))
-	petService := petservice.NewPetService(petRepository, kitlog.With(logger, "service", "pet"))
-	ownerEndpoints := ownerendpoint.NewSet(ownerService, logger)
-	petEndpoints := petendpoint.NewSet(ownerService, petService, logger)
+	petService := petservice.NewPetService(petRepository, ownerService, kitlog.With(logger, "service", "pet"))
 
-	httpHandler := transport.MakeHTTPServer(ownerEndpoints, petEndpoints, logger)
+	ownerEndpoints := ownerendpoint.NewSet(viper, ownerService, kitlog.With(logger, "endpoint", "owner"))
+	petEndpoints := petendpoint.NewSet(viper, ownerService, petService, kitlog.With(logger, "endpoint", "pet"))
+
+	httpHandler := transport.MakeHTTPServer(ownerEndpoints, petEndpoints, kitlog.With(logger, "transport", "http"))
 	httpHandler = accessControl(httpHandler)
 
 	// grpcHandler := transport.NewGRPCServer(endpoints, logger)

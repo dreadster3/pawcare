@@ -3,6 +3,7 @@ package service
 import (
 	ownerdomain "github.com/dreadster3/pawcare/services/account/owner/domain"
 	"github.com/dreadster3/pawcare/services/account/pet/domain"
+	"github.com/dreadster3/pawcare/services/auth"
 	"github.com/go-kit/log"
 	"golang.org/x/net/context"
 )
@@ -27,19 +28,26 @@ func (mw *loggingMiddleware) FindById(ctx context.Context, id domain.PetId) (pet
 	return mw.next.FindById(ctx, id)
 }
 
-func (mw *loggingMiddleware) FindByOwnerId(ctx context.Context, ownerId ownerdomain.OwnerId) (pet []*domain.Pet, err error) {
+func (mw *loggingMiddleware) FindByUserId(ctx context.Context, userId auth.UserId) (pets []*domain.Pet, err error) {
 	defer func() {
-		mw.logger.Log("method", "FindByOwnerId", "id", ownerId, "pet", pet, "err", err)
+		mw.logger.Log("method", "FindByUserId", "userId", userId, "pets", pets, "err", err)
+	}()
+	return mw.next.FindByUserId(ctx, userId)
+}
+
+func (mw *loggingMiddleware) FindByOwnerId(ctx context.Context, ownerId ownerdomain.OwnerId) (pets []*domain.Pet, err error) {
+	defer func() {
+		mw.logger.Log("method", "FindByOwnerId", "ownerId", ownerId, "pets", pets, "err", err)
 	}()
 	return mw.next.FindByOwnerId(ctx, ownerId)
 }
 
-func (mw *loggingMiddleware) Create(ctx context.Context, ownerId ownerdomain.OwnerId, petProfile domain.PetProfile) (pet *domain.Pet, err error) {
+func (mw *loggingMiddleware) Create(ctx context.Context, userId auth.UserId, petProfile domain.PetProfile) (pet *domain.Pet, err error) {
 	defer func() {
-		mw.logger.Log("method", "Create", "ownerId", ownerId, "pet", pet, "err", err)
+		mw.logger.Log("method", "Create", "userId", userId, "pet", pet, "err", err)
 	}()
 
-	return mw.next.Create(ctx, ownerId, petProfile)
+	return mw.next.Create(ctx, userId, petProfile)
 }
 
 func (mw *loggingMiddleware) Update(ctx context.Context, pet *domain.Pet) (p *domain.Pet, err error) {

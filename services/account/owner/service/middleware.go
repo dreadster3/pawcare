@@ -41,7 +41,7 @@ func (mw *loggingMiddleware) FindByUserId(ctx context.Context, userId auth.UserI
 
 func (mw *loggingMiddleware) Create(ctx context.Context, userId auth.UserId, ownerProfile domain.OwnerProfile) (owner *domain.Owner, err error) {
 	defer func() {
-		mw.logger.Log("method", "Save", "userId", userId, "ownerProfile", ownerProfile, "owner", "err", err)
+		mw.logger.Log("method", "Create", "userId", userId, "ownerProfile", ownerProfile, "owner", owner, "err", err)
 	}()
 
 	return mw.next.Create(ctx, userId, ownerProfile)
@@ -77,7 +77,7 @@ func (mw *validationMiddleware) Create(ctx context.Context, userId auth.UserId, 
 		return nil, err
 	}
 
-	if time.Now().After(ownerProfile.DateOfBirth) || time.Now().AddDate(-150, 0, 0).Before(ownerProfile.DateOfBirth) {
+	if time.Now().Before(ownerProfile.DateOfBirth) || time.Now().AddDate(-150, 0, 0).After(ownerProfile.DateOfBirth) {
 		return nil, ErrInvalidDate
 	}
 
@@ -89,7 +89,7 @@ func (mw *validationMiddleware) Update(ctx context.Context, owner *domain.Owner)
 		return nil, err
 	}
 
-	if time.Now().After(owner.Profile.DateOfBirth) || time.Now().AddDate(-150, 0, 0).Before(owner.Profile.DateOfBirth) {
+	if time.Now().Before(owner.Profile.DateOfBirth) || time.Now().AddDate(-150, 0, 0).After(owner.Profile.DateOfBirth) {
 		return nil, ErrInvalidDate
 	}
 

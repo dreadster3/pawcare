@@ -7,16 +7,17 @@ import (
 
 	"github.com/dreadster3/pawcare/services/account/pet/endpoint"
 	"github.com/dreadster3/pawcare/services/account/repository"
+	"github.com/dreadster3/pawcare/shared/common"
 	"github.com/dreadster3/pawcare/shared/models"
-	"github.com/gin-gonic/gin"
 	kitjwt "github.com/go-kit/kit/auth/jwt"
 	kittransport "github.com/go-kit/kit/transport"
 	kithttp "github.com/go-kit/kit/transport/http"
 	kitlog "github.com/go-kit/log"
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/gorilla/mux"
 )
 
-func RegisterHTTPRoutes(r *gin.RouterGroup, endpoints endpoint.Set, logger kitlog.Logger) {
+func RegisterHTTPRoutes(r *mux.Router, endpoints endpoint.Set, logger kitlog.Logger) {
 	opts := []kithttp.ServerOption{
 		kithttp.ServerErrorHandler(kittransport.NewLogErrorHandler(logger)),
 		kithttp.ServerErrorEncoder(encodeError),
@@ -24,15 +25,45 @@ func RegisterHTTPRoutes(r *gin.RouterGroup, endpoints endpoint.Set, logger kitlo
 
 	authenticatedOpts := append(opts, kithttp.ServerBefore(kitjwt.HTTPToContext()))
 
-	petCreateHandler := kithttp.NewServer(
+	createHandler := kithttp.NewServer(
 		endpoints.CreateEndpoint,
-		decodeJSONRequest[endpoint.PetCreateRequest],
+		decodeJSONRequest[endpoint.CreateRequest],
 		encodeResponse,
 		authenticatedOpts...,
 	)
 
-	petsGroup := r.Group("/pets")
-	petsGroup.Handle("POST", "/", gin.WrapH(petCreateHandler))
+	getAllHandler := kithttp.NewServer(
+		endpoints.GetAllEndpoint,
+		decodeGetRequest,
+		encodeResponse,
+		authenticatedOpts...,
+	)
+
+	getHandler := kithttp.NewServer(
+		endpoints.GetEndpoint,
+		decodeGetByIdRequest,
+		encodeResponse,
+		authenticatedOpts...,
+	)
+
+	router := r.PathPrefix("/pets").Subrouter()
+	router.Methods("POST").Path("").Handler(createHandler)
+	router.Methods("GET").Path("").Handler(getAllHandler)
+	router.Methods("GET").Path("/{id}").Handler(getHandler)
+}
+
+func decodeGetRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	return nil, nil
+}
+
+func decodeGetByIdRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	vars := mux.Vars(r)
+	id, ok := vars["id"]
+	if !ok {
+		return nil, common.ErrCastRequest
+	}
+
+	return endpoint.GetRequest{Id: id}, nil
 }
 
 func decodeJSONRequest[T any](_ context.Context, r *http.Request) (interface{}, error) {

@@ -2,10 +2,12 @@ package endpoint
 
 import (
 	"github.com/dreadster3/pawcare/services/account/owner/service"
+	"github.com/dreadster3/pawcare/shared/common"
 	kitjwt "github.com/go-kit/kit/auth/jwt"
 	"github.com/go-kit/kit/endpoint"
 	"github.com/go-kit/log"
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/spf13/viper"
 )
 
 type Set struct {
@@ -13,8 +15,8 @@ type Set struct {
 	GetEndpoint    endpoint.Endpoint
 }
 
-func NewSet(ownerService service.IOwnerService, logger log.Logger) Set {
-	kf := func(token *jwt.Token) (interface{}, error) { return []byte("SuperSecret"), nil }
+func NewSet(viper viper.Viper, ownerService service.IOwnerService, logger log.Logger) Set {
+	kf := common.JWTKeyFactory(viper)
 
 	var createEndpoint endpoint.Endpoint
 	{

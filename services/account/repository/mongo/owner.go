@@ -5,7 +5,9 @@ import (
 
 	"github.com/dreadster3/pawcare/services/account/owner/domain"
 	"github.com/dreadster3/pawcare/services/account/repository"
+	"github.com/dreadster3/pawcare/services/account/repository/middleware"
 	"github.com/dreadster3/pawcare/services/auth"
+	"github.com/go-kit/log"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -55,8 +57,10 @@ type ownerRepository struct {
 	db *mongo.Database
 }
 
-func NewOwnerRepository(db *mongo.Database) domain.IOwnerRepository {
-	return &ownerRepository{db}
+func NewOwnerRepository(db *mongo.Database, logger log.Logger) domain.IOwnerRepository {
+	repository := &ownerRepository{db}
+
+	return middleware.OwnerWarpMiddleware(repository, logger)
 }
 
 func (r *ownerRepository) Collection() *mongo.Collection {
@@ -100,6 +104,10 @@ func (r *ownerRepository) FindByUserId(ctx context.Context, id auth.UserId) (*do
 }
 
 func (r *ownerRepository) Create(ctx context.Context, owner *domain.Owner) error {
+	if _, err := r.FindByUserId(ctx, owner.UserId); err == nil {
+		return repository.ErrAlreadyCreated
+	}
+
 	entity, err := fromOwnerModel(*owner)
 	if err != nil {
 		return err

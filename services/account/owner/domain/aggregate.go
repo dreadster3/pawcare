@@ -1,6 +1,8 @@
 package domain
 
 import (
+	"fmt"
+
 	"github.com/dreadster3/pawcare/services/auth"
 )
 
@@ -17,4 +19,8 @@ func NewOwner(userId auth.UserId, profile OwnerProfile) *Owner {
 		UserId:  userId,
 		Profile: profile,
 	}
+}
+
+func (o Owner) String() string {
+	return fmt.Sprintf("Owner(id=%s,userId=%s,profile=%s)", o.Id, o.UserId, o.Profile)
 }

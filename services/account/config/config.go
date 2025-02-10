@@ -5,18 +5,19 @@ import (
 )
 
 const (
-	HTTPPortKey = "HTTP_PORT"
-	GRPCPortKey = "GRPC_PORT"
-	DBHostKey   = "DB_HOST"
-	DBPortKey   = "DB_PORT"
-	DBUserKey   = "DB_USER"
-	DBPassKey   = "DB_PASS"
+	HTTPPortKey  = "HTTP_PORT"
+	GRPCPortKey  = "GRPC_PORT"
+	DBHostKey    = "DB_HOST"
+	DBPortKey    = "DB_PORT"
+	DBUserKey    = "DB_USER"
+	DBPassKey    = "DB_PASS"
+	JWTSecretKey = "JWT_SECRET"
 )
 
 func InitConfig() viper.Viper {
 	viper := viper.New()
 
-	viper.SetEnvPrefix("pawcare")
+	viper.SetEnvPrefix("PAWCARE")
 	viper.AddConfigPath("$HOME/.config/pawcare")
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
@@ -27,6 +28,7 @@ func InitConfig() viper.Viper {
 	viper.BindEnv(DBPortKey)
 	viper.BindEnv(DBUserKey)
 	viper.BindEnv(DBPassKey)
+	viper.BindEnv(JWTSecretKey)
 
 	viper.SetDefault(HTTPPortKey, "8080")
 	viper.SetDefault(GRPCPortKey, "8081")
