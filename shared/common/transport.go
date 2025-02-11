@@ -4,9 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"github.com/dreadster3/pawcare/shared/utils"
+	grpctransport "github.com/go-kit/kit/transport/grpc"
+	httptransport "github.com/go-kit/kit/transport/http"
+	"github.com/go-kit/log"
 	"github.com/gorilla/mux"
+	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/peer"
 )
 
 func DecodeNoBodyRequest(_ context.Context, r *http.Request) (interface{}, error) {
@@ -33,4 +39,66 @@ func DecodeJSONRequest[T any](_ context.Context, r *http.Request) (interface{}, 
 
 func GRPCDecodeNoBody(_ context.Context, req interface{}) (interface{}, error) {
 	return nil, nil
+}
+
+func HTTPLoggingServerOptions(logger log.Logger) []httptransport.ServerOption {
+	return []httptransport.ServerOption{
+		httptransport.ServerBefore(func(ctx context.Context, r *http.Request) context.Context {
+			clientIp := r.RemoteAddr
+			method := r.Method
+			path := r.URL.Path
+			contentLength := r.ContentLength
+			userAgent := r.UserAgent()
+
+			logger.Log("method", method, "path", path, "client_ip", clientIp, "user_agent", userAgent, "content_length", contentLength, "msg", "Incoming request")
+
+			return ctx
+		}),
+
+		httptransport.ServerFinalizer(func(ctx context.Context, code int, r *http.Request) {
+			method := r.Method
+			path := r.URL.Path
+			clientIp := r.RemoteAddr
+			userAgent := r.UserAgent()
+
+			logger.Log("method", method, "path", path, "client_ip", clientIp, "user_agent", userAgent, "status_code", code, "msg", "Outgoing response")
+		}),
+	}
+}
+
+func GRPCLoggingServerOptions(logger log.Logger) []grpctransport.ServerOption {
+	return []grpctransport.ServerOption{
+		grpctransport.ServerBefore(func(ctx context.Context, md metadata.MD) context.Context {
+			logs := []interface{}{}
+			if userAgents, ok := md["user-agent"]; ok {
+				logs = append(logs, "user_agent", strings.Join(userAgents, ";"))
+			}
+
+			if p, ok := peer.FromContext(ctx); ok && p != nil {
+				logs = append(logs, "client_ip", p.Addr)
+			}
+
+			logs = append(logs, "msg", "Incoming request")
+
+			logger.Log(logs...)
+
+			return ctx
+		}),
+		grpctransport.ServerFinalizer(func(ctx context.Context, err error) {
+			logs := []interface{}{}
+
+			if md, ok := metadata.FromIncomingContext(ctx); ok {
+				if userAgents, ok := md["user-agent"]; ok {
+					logs = append(logs, "user_agent", strings.Join(userAgents, ";"))
+				}
+			}
+
+			if p, ok := peer.FromContext(ctx); ok && p != nil {
+				logs = append(logs, "client_ip", p.Addr)
+			}
+			logs = append(logs, "msg", "Outgoing response")
+
+			logger.Log(logs...)
+		}),
+	}
 }

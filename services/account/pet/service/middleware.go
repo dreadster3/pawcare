@@ -30,14 +30,14 @@ func (mw *loggingMiddleware) FindById(ctx context.Context, id domain.PetId) (pet
 
 func (mw *loggingMiddleware) FindByUserId(ctx context.Context, userId auth.UserId) (pets []*domain.Pet, err error) {
 	defer func() {
-		mw.logger.Log("method", "FindByUserId", "userId", userId, "pets", pets, "err", err)
+		mw.logger.Log("method", "FindByUserId", "userId", userId, "pets", len(pets), "err", err)
 	}()
 	return mw.next.FindByUserId(ctx, userId)
 }
 
 func (mw *loggingMiddleware) FindByOwnerId(ctx context.Context, ownerId ownerdomain.OwnerId) (pets []*domain.Pet, err error) {
 	defer func() {
-		mw.logger.Log("method", "FindByOwnerId", "ownerId", ownerId, "pets", pets, "err", err)
+		mw.logger.Log("method", "FindByOwnerId", "ownerId", ownerId, "pets", len(pets), "err", err)
 	}()
 	return mw.next.FindByOwnerId(ctx, ownerId)
 }

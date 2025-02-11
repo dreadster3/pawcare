@@ -24,6 +24,7 @@ func NewGRPCServer(endpoints endpoint.Set, logger log.Logger) proto.OwnerService
 		grpc.ServerErrorHandler(transport.NewLogErrorHandler(logger)),
 		grpc.ServerBefore(kitjwt.GRPCToContext()),
 	}
+	options = append(options, common.GRPCLoggingServerOptions(logger)...)
 
 	getHandler := grpc.NewServer(
 		endpoints.GetEndpoint,

@@ -18,12 +18,13 @@ import (
 )
 
 func RegisterHTTPRoutes(r *mux.Router, endpoints endpoint.Set, logger kitlog.Logger) {
-	opts := []kithttp.ServerOption{
+	options := []kithttp.ServerOption{
 		kithttp.ServerErrorHandler(kittransport.NewLogErrorHandler(logger)),
 		kithttp.ServerErrorEncoder(encodeError),
 	}
+	options = append(options, common.HTTPLoggingServerOptions(logger)...)
 
-	authenticatedOpts := append(opts, kithttp.ServerBefore(kitjwt.HTTPToContext()))
+	authenticatedOpts := append(options, kithttp.ServerBefore(kitjwt.HTTPToContext()))
 
 	createHandler := kithttp.NewServer(
 		endpoints.CreateEndpoint,
