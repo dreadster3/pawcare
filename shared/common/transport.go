@@ -7,9 +7,11 @@ import (
 	"strings"
 
 	"github.com/dreadster3/pawcare/shared/utils"
+	kitjwt "github.com/go-kit/kit/auth/jwt"
 	grpctransport "github.com/go-kit/kit/transport/grpc"
 	httptransport "github.com/go-kit/kit/transport/http"
 	"github.com/go-kit/log"
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/gorilla/mux"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/peer"
@@ -39,6 +41,34 @@ func DecodeJSONRequest[T any](_ context.Context, r *http.Request) (interface{}, 
 
 func GRPCDecodeNoBody(_ context.Context, req interface{}) (interface{}, error) {
 	return nil, nil
+}
+
+type errorer interface {
+	error() error
+}
+
+func EncodeResponse(encodeError func(context.Context, error, http.ResponseWriter)) func(context.Context, http.ResponseWriter, interface{}) error {
+	return func(ctx context.Context, w http.ResponseWriter, response interface{}) error {
+		if e, ok := response.(errorer); ok && e.error() != nil {
+			encodeError(ctx, e.error(), w)
+			return nil
+		}
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		return json.NewEncoder(w).Encode(response)
+	}
+}
+
+func EncodeError(_ context.Context, err error, w http.ResponseWriter) {
+	switch err {
+	case kitjwt.ErrTokenExpired, kitjwt.ErrTokenContextMissing, kitjwt.ErrTokenInvalid, kitjwt.ErrTokenMalformed, kitjwt.ErrTokenNotActive, jwt.ErrSignatureInvalid:
+		w.WriteHeader(http.StatusUnauthorized)
+	case ErrAlreadyCreated:
+		w.WriteHeader(http.StatusConflict)
+	case ErrNotFound:
+		w.WriteHeader(http.StatusNotFound)
+	default:
+		w.WriteHeader(http.StatusInternalServerError)
+	}
 }
 
 func HTTPLoggingServerOptions(logger log.Logger) []httptransport.ServerOption {

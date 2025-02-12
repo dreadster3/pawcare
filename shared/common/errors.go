@@ -7,4 +7,17 @@ var (
 	ErrCastResponse  = errors.New("cannot cast response")
 	ErrParsingClaims = errors.New("error parsing claims")
 	ErrUnauthorized  = errors.New("unauthorized")
+
+	ErrAlreadyCreated = errors.New("resource already exists")
+	ErrNotFound       = errors.New("resource not found error")
 )
+
+type ErrorResponse struct {
+	Error string `json:"error"`
+}
+
+func NewErrorResponse(err error) ErrorResponse {
+	return ErrorResponse{
+		Error: err.Error(),
+	}
+}

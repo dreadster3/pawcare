@@ -11,13 +11,11 @@ import (
 
 	"github.com/oklog/oklog/pkg/group"
 
-	"github.com/dreadster3/pawcare/services/account/internal/config"
-	ownerendpoint "github.com/dreadster3/pawcare/services/account/internal/owner/endpoint"
-	ownerservice "github.com/dreadster3/pawcare/services/account/internal/owner/service"
-	petendpoint "github.com/dreadster3/pawcare/services/account/internal/pet/endpoint"
-	petservice "github.com/dreadster3/pawcare/services/account/internal/pet/service"
-	"github.com/dreadster3/pawcare/services/account/internal/repository/mongo"
-	"github.com/dreadster3/pawcare/services/account/internal/transport"
+	"github.com/dreadster3/pawcare/services/medical/internal/config"
+	"github.com/dreadster3/pawcare/services/medical/internal/record/domain"
+	"github.com/dreadster3/pawcare/services/medical/internal/record/endpoint"
+	"github.com/dreadster3/pawcare/services/medical/internal/record/service"
+	"github.com/dreadster3/pawcare/services/medical/internal/transport"
 	"github.com/dreadster3/pawcare/shared/common"
 	"github.com/dreadster3/pawcare/shared/db/mongodb"
 	kitlog "github.com/go-kit/log"
@@ -50,7 +48,7 @@ func _main() error {
 	viper := config.InitConfig()
 	ctx := context.Background()
 
-	db, teardown, err := mongodb.ConnectDB(ctx, viper.GetString(common.DBConnectionStringKey), "accounts")
+	_, teardown, err := mongodb.ConnectDB(ctx, viper.GetString(common.DBConnectionStringKey), "accounts")
 	defer teardown(ctx)
 	if err != nil {
 		return err
@@ -59,16 +57,12 @@ func _main() error {
 	logger := kitlog.NewLogfmtLogger(kitlog.NewSyncWriter(os.Stderr))
 	logger = kitlog.With(logger, "ts", kitlog.DefaultTimestampUTC, "caller", kitlog.DefaultCaller)
 
-	ownerRepository := mongo.NewOwnerRepository(db, kitlog.With(logger, "repository", "owner"))
-	petRepository := mongo.NewPetRepository(db)
+	var repository domain.IRecordRepository
 
-	ownerService := ownerservice.NewOwnerService(ownerRepository, kitlog.With(logger, "service", "owner"))
-	petService := petservice.NewPetService(petRepository, ownerService, kitlog.With(logger, "service", "pet"))
+	service := service.NewRecordService(repository, logger)
+	endpoints := endpoint.NewSet(viper, service)
 
-	ownerEndpoints := ownerendpoint.NewSet(viper, ownerService, kitlog.With(logger, "endpoint", "owner"))
-	petEndpoints := petendpoint.NewSet(viper, ownerService, petService, kitlog.With(logger, "endpoint", "pet"))
-
-	httpHandler := transport.MakeHTTPServer(ownerEndpoints, petEndpoints, kitlog.With(logger, "transport", "http"))
+	httpHandler := transport.MakeHTTPServer(endpoints, kitlog.With(logger, "transport", "http"))
 	httpHandler = accessControl(httpHandler)
 
 	var g group.Group
@@ -99,7 +93,7 @@ func _main() error {
 		}
 
 		g.Add(func() error {
-			server := transport.NewGRPCServer(ownerEndpoints, petEndpoints, logger)
+			server := transport.NewGRPCServer(logger)
 			logger.Log("msg", "Starting server", "addr", grpcAddr)
 			return server.Serve(grpcListenAddr)
 		}, func(err error) {
