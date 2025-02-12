@@ -25,11 +25,6 @@ import (
 	"github.com/joho/godotenv"
 )
 
-const (
-	DefaultHttpPort string = "8080"
-	DefaultGrpcPort string = "8081"
-)
-
 func accessControl(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")

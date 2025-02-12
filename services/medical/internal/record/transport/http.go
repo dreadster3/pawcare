@@ -29,6 +29,14 @@ func RegisterHTTPRoutes(r *mux.Router, enpoints endpoint.Set, logger log.Logger)
 		options...,
 	)
 
+	getByPetIdHandler := kithttp.NewServer(
+		enpoints.GetByPetIdEndpoint,
+		common.DecodePathParameters[endpoint.GetByPetIdRequest],
+		common.EncodeResponse(encodeError),
+		options...,
+	)
+
+	r.Methods("GET").Path("/pets/{id}/records").Handler(getByPetIdHandler)
 	router := r.PathPrefix("/records").Subrouter()
 	router.Methods("POST").Path("").Handler(createHandler)
 }

@@ -8,13 +8,14 @@ import (
 	"github.com/dreadster3/pawcare/services/medical/internal/record/service"
 	"github.com/dreadster3/pawcare/shared/common"
 	"github.com/go-kit/kit/endpoint"
+	"github.com/go-playground/validator/v10"
 )
 
 type CreateRequest struct {
-	PetId       string            `json:"pet_id" validate:"required"`
-	RecordType  domain.RecordType `json:"record_type" validate:"required"`
-	Description string            `json:"description" validate:"required"`
-	Date        time.Time         `json:"date" validate:"required"`
+	PetId       string    `json:"pet_id" validate:"required"`
+	Type        string    `json:"type" validate:"required,oneof=vaccination treatment deworming surgery checkup other"`
+	Description string    `json:"description" validate:"required"`
+	Date        time.Time `json:"date" validate:"required"`
 }
 
 type CreateResponse struct {
@@ -28,8 +29,12 @@ func makeCreateEndpoint(recordService service.IRecordService) endpoint.Endpoint 
 			return nil, common.ErrCastRequest
 		}
 
+		if err := validator.New().Struct(req); err != nil {
+			return nil, err
+		}
+
 		petId := domain.PetId(req.PetId)
-		recordInfo := domain.NewRecordInfo(req.RecordType, req.Description, req.Date)
+		recordInfo := domain.NewRecordInfo(domain.RecordType(req.Type), req.Description, req.Date)
 		record, err := recordService.Create(ctx, petId, recordInfo)
 		if err != nil {
 			return nil, err

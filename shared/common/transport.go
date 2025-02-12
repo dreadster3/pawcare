@@ -3,6 +3,7 @@ package common
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strings"
 
@@ -11,6 +12,7 @@ import (
 	grpctransport "github.com/go-kit/kit/transport/grpc"
 	httptransport "github.com/go-kit/kit/transport/http"
 	"github.com/go-kit/log"
+	"github.com/go-playground/validator/v10"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/gorilla/mux"
 	"google.golang.org/grpc/metadata"
@@ -59,6 +61,12 @@ func EncodeResponse(encodeError func(context.Context, error, http.ResponseWriter
 }
 
 func EncodeError(_ context.Context, err error, w http.ResponseWriter) {
+	var validationErr validator.ValidationErrors
+	if errors.As(err, &validationErr) {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
 	switch err {
 	case kitjwt.ErrTokenExpired, kitjwt.ErrTokenContextMissing, kitjwt.ErrTokenInvalid, kitjwt.ErrTokenMalformed, kitjwt.ErrTokenNotActive, jwt.ErrSignatureInvalid:
 		w.WriteHeader(http.StatusUnauthorized)

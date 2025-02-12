@@ -12,20 +12,15 @@ import (
 	"github.com/oklog/oklog/pkg/group"
 
 	"github.com/dreadster3/pawcare/services/medical/internal/config"
-	"github.com/dreadster3/pawcare/services/medical/internal/record/domain"
 	"github.com/dreadster3/pawcare/services/medical/internal/record/endpoint"
 	"github.com/dreadster3/pawcare/services/medical/internal/record/service"
+	"github.com/dreadster3/pawcare/services/medical/internal/repository/mongo"
 	"github.com/dreadster3/pawcare/services/medical/internal/transport"
 	"github.com/dreadster3/pawcare/shared/common"
 	"github.com/dreadster3/pawcare/shared/db/mongodb"
 	kitlog "github.com/go-kit/log"
 
 	"github.com/joho/godotenv"
-)
-
-const (
-	DefaultHttpPort string = "8080"
-	DefaultGrpcPort string = "8081"
 )
 
 func accessControl(h http.Handler) http.Handler {
@@ -48,7 +43,7 @@ func _main() error {
 	viper := config.InitConfig()
 	ctx := context.Background()
 
-	_, teardown, err := mongodb.ConnectDB(ctx, viper.GetString(common.DBConnectionStringKey), "accounts")
+	db, teardown, err := mongodb.ConnectDB(ctx, viper.GetString(common.DBConnectionStringKey), "medical")
 	defer teardown(ctx)
 	if err != nil {
 		return err
@@ -57,9 +52,9 @@ func _main() error {
 	logger := kitlog.NewLogfmtLogger(kitlog.NewSyncWriter(os.Stderr))
 	logger = kitlog.With(logger, "ts", kitlog.DefaultTimestampUTC, "caller", kitlog.DefaultCaller)
 
-	var repository domain.IRecordRepository
+	repository := mongo.NewRecordRepository(db, kitlog.With(logger, "repository", "record"))
 
-	service := service.NewRecordService(repository, logger)
+	service := service.NewRecordService(repository, kitlog.With(logger, "service", "record"))
 	endpoints := endpoint.NewSet(viper, service)
 
 	httpHandler := transport.MakeHTTPServer(endpoints, kitlog.With(logger, "transport", "http"))
