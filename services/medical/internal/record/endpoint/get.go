@@ -12,8 +12,8 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
-type GetByPetIdRequest struct {
-	PetId string `json:"id" validate:"required"`
+type GetByIdRequest struct {
+	Id string `json:"id" validate:"required"`
 }
 
 type GetResponse struct {
@@ -25,7 +25,7 @@ type GetResponse struct {
 
 func makeGetByPetIdEndpoint(recordService service.IRecordService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
-		req, ok := request.(GetByPetIdRequest)
+		req, ok := request.(GetByIdRequest)
 		if !ok {
 			return nil, common.ErrCastRequest
 		}
@@ -34,7 +34,7 @@ func makeGetByPetIdEndpoint(recordService service.IRecordService) endpoint.Endpo
 			return nil, err
 		}
 
-		petId := domain.PetId(req.PetId)
+		petId := domain.PetId(req.Id)
 		records, err := recordService.FindByPetId(ctx, petId)
 		if err != nil {
 			return nil, err
@@ -48,5 +48,31 @@ func makeGetByPetIdEndpoint(recordService service.IRecordService) endpoint.Endpo
 				Description: r.RecordInfo.Description,
 			}
 		}), nil
+	}
+}
+
+func makeGetByIdEndpoint(recordService service.IRecordService) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+		req, ok := request.(GetByIdRequest)
+		if !ok {
+			return nil, common.ErrCastRequest
+		}
+
+		if err := validator.New().Struct(req); err != nil {
+			return nil, err
+		}
+
+		id := domain.RecordId(req.Id)
+		record, err := recordService.FindById(ctx, id)
+		if err != nil {
+			return nil, err
+		}
+
+		return GetResponse{
+			Id:          string(record.Id),
+			Type:        string(record.RecordInfo.Type),
+			Description: record.RecordInfo.Description,
+			Date:        record.RecordInfo.Date,
+		}, nil
 	}
 }

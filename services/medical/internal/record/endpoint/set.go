@@ -12,6 +12,7 @@ import (
 type Set struct {
 	CreateEndpoint     endpoint.Endpoint
 	GetByPetIdEndpoint endpoint.Endpoint
+	GetByIdEndpoint    endpoint.Endpoint
 }
 
 func NewSet(viper viper.Viper, recordService service.IRecordService) Set {
@@ -29,8 +30,15 @@ func NewSet(viper viper.Viper, recordService service.IRecordService) Set {
 		getByPetIdEndpoint = kitjwt.NewParser(kf, jwt.SigningMethodHS256, kitjwt.StandardClaimsFactory)(getByPetIdEndpoint)
 	}
 
+	var getByIdEndpoint endpoint.Endpoint
+	{
+		getByIdEndpoint = makeGetByIdEndpoint(recordService)
+		getByIdEndpoint = kitjwt.NewParser(kf, jwt.SigningMethodHS256, kitjwt.StandardClaimsFactory)(getByIdEndpoint)
+	}
+
 	return Set{
 		CreateEndpoint:     createEndpoint,
 		GetByPetIdEndpoint: getByPetIdEndpoint,
+		GetByIdEndpoint:    getByIdEndpoint,
 	}
 }

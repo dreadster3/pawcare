@@ -31,7 +31,14 @@ func RegisterHTTPRoutes(r *mux.Router, enpoints endpoint.Set, logger log.Logger)
 
 	getByPetIdHandler := kithttp.NewServer(
 		enpoints.GetByPetIdEndpoint,
-		common.DecodePathParameters[endpoint.GetByPetIdRequest],
+		common.DecodePathParameters[endpoint.GetByIdRequest],
+		common.EncodeResponse(encodeError),
+		options...,
+	)
+
+	getByIdHandler := kithttp.NewServer(
+		enpoints.GetByIdEndpoint,
+		common.DecodePathParameters[endpoint.GetByIdRequest],
 		common.EncodeResponse(encodeError),
 		options...,
 	)
@@ -39,6 +46,7 @@ func RegisterHTTPRoutes(r *mux.Router, enpoints endpoint.Set, logger log.Logger)
 	r.Methods("GET").Path("/pets/{id}/records").Handler(getByPetIdHandler)
 	router := r.PathPrefix("/records").Subrouter()
 	router.Methods("POST").Path("").Handler(createHandler)
+	router.Methods("GET").Path("/{id}").Handler(getByIdHandler)
 }
 
 func encodeError(ctx context.Context, err error, w http.ResponseWriter) {
