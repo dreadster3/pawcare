@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package proto;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/dreadster3/pawcare/services/account/pet/proto";
+
+service PetService {
+  rpc GetById(GetByIdRequest) returns (GetPetResponse) {}
+}
+
+message GetByIdRequest {
+  string id = 1;
+}
+
+message GetPetResponse {
+  string id = 1;
+  string owner_id = 2;
+  string name = 3;
+  google.protobuf.Timestamp date_of_birth = 4;
+  string species = 5;
+  string breed = 6;
+  double weight = 7;
+  string gender = 8;
+  string err = 9;
+}

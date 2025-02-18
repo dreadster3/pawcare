@@ -10,7 +10,9 @@ import (
 	"syscall"
 
 	"github.com/oklog/oklog/pkg/group"
+	"google.golang.org/grpc"
 
+	"github.com/dreadster3/pawcare/services/account/pkg/client/pet"
 	"github.com/dreadster3/pawcare/services/medical/internal/config"
 	"github.com/dreadster3/pawcare/services/medical/internal/record/endpoint"
 	"github.com/dreadster3/pawcare/services/medical/internal/record/service"
@@ -52,10 +54,17 @@ func _main() error {
 	logger := kitlog.NewLogfmtLogger(kitlog.NewSyncWriter(os.Stderr))
 	logger = kitlog.With(logger, "ts", kitlog.DefaultTimestampUTC, "caller", kitlog.DefaultCaller)
 
+	conn, err := grpc.Dial("localhost:8081", grpc.WithInsecure())
+	if err != nil {
+		return err
+	}
+
+	petService := pet.NewPetService(conn, kitlog.With(logger, "client", "pet"))
+
 	repository := mongo.NewRecordRepository(db, kitlog.With(logger, "repository", "record"))
 
 	service := service.NewRecordService(repository, kitlog.With(logger, "service", "record"))
-	endpoints := endpoint.NewSet(viper, service)
+	endpoints := endpoint.NewSet(viper, service, petService)
 
 	httpHandler := transport.MakeHTTPServer(endpoints, kitlog.With(logger, "transport", "http"))
 	httpHandler = accessControl(httpHandler)

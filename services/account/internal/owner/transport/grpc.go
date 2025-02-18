@@ -38,13 +38,13 @@ func NewGRPCServer(endpoints endpoint.Set, logger log.Logger) proto.OwnerService
 	}
 }
 
-func (srv *grpcServer) Get(ctx context.Context, req *emptypb.Empty) (*proto.GetResponse, error) {
+func (srv *grpcServer) Get(ctx context.Context, req *emptypb.Empty) (*proto.GetOwnerResponse, error) {
 	_, res, err := srv.get.ServeGRPC(ctx, req)
 	if err != nil {
 		return nil, err
 	}
 
-	return res.(*proto.GetResponse), nil
+	return res.(*proto.GetOwnerResponse), nil
 }
 
 func encodeGetResponse(_ context.Context, res interface{}) (interface{}, error) {
@@ -53,7 +53,7 @@ func encodeGetResponse(_ context.Context, res interface{}) (interface{}, error) 
 		return nil, common.ErrCastResponse
 	}
 
-	return &proto.GetResponse{
+	return &proto.GetOwnerResponse{
 		Id:          response.Id,
 		Name:        response.Name,
 		DateOfBirth: response.DateOfBirth.String(),

@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/dreadster3/pawcare/services/account/pkg/client/pet"
 	"github.com/dreadster3/pawcare/services/medical/internal/record/domain"
 	"github.com/dreadster3/pawcare/services/medical/internal/record/service"
 	"github.com/dreadster3/pawcare/shared/common"
@@ -22,7 +23,7 @@ type CreateResponse struct {
 	Id string `json:"id"`
 }
 
-func makeCreateEndpoint(recordService service.IRecordService) endpoint.Endpoint {
+func makeCreateEndpoint(recordService service.IRecordService, petService pet.IPetService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		req, ok := request.(CreateRequest)
 		if !ok {
@@ -30,6 +31,10 @@ func makeCreateEndpoint(recordService service.IRecordService) endpoint.Endpoint 
 		}
 
 		if err := validator.New().Struct(req); err != nil {
+			return nil, err
+		}
+
+		if _, err := petService.GetById(ctx, pet.PetId(req.PetId)); err != nil {
 			return nil, err
 		}
 

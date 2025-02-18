@@ -45,6 +45,15 @@ func GRPCDecodeNoBody(_ context.Context, req interface{}) (interface{}, error) {
 	return nil, nil
 }
 
+func GRPCDecodeToObject[T any](_ context.Context, request interface{}) (interface{}, error) {
+	req, ok := request.(T)
+	if !ok {
+		return nil, ErrCastRequest
+	}
+
+	return req, nil
+}
+
 type errorer interface {
 	error() error
 }

@@ -2,6 +2,7 @@ package endpoint
 
 import (
 	"context"
+	"time"
 
 	ownerdomain "github.com/dreadster3/pawcare/services/account/internal/owner/domain"
 	ownerservice "github.com/dreadster3/pawcare/services/account/internal/owner/service"
@@ -19,13 +20,17 @@ type GetRequest struct {
 }
 
 type GetResponse struct {
-	Id      string `json:"id"`
-	Name    string `json:"name"`
-	Species string `json:"species"`
-	Breed   string `json:"breed"`
+	Id          string    `json:"id"`
+	OwnerId     string    `json:"owner_id"`
+	Name        string    `json:"name"`
+	DateOfBirth time.Time `json:"date_of_birth"`
+	Species     string    `json:"species"`
+	Breed       string    `json:"breed"`
+	Weight      float64   `json:"weight"`
+	Gender      string    `json:"gender"`
 }
 
-func makeGetEndpoint(ownerService ownerservice.IOwnerService, petService petservice.IPetService) endpoint.Endpoint {
+func makeGetByIdEndpoint(ownerService ownerservice.IOwnerService, petService petservice.IPetService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		req, ok := request.(GetRequest)
 		if !ok {
@@ -58,9 +63,13 @@ func makeGetEndpoint(ownerService ownerservice.IOwnerService, petService petserv
 
 		return GetResponse{
 			string(pet.Id),
+			string(pet.OwnerId),
 			pet.Profile.Name,
+			pet.Profile.DateOfBirth,
 			pet.Profile.Species,
 			pet.Profile.Breed,
+			pet.Profile.Weight,
+			string(pet.Profile.Gender),
 		}, nil
 	}
 }

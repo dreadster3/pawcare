@@ -1,6 +1,7 @@
 package endpoint
 
 import (
+	"github.com/dreadster3/pawcare/services/account/pkg/client/pet"
 	"github.com/dreadster3/pawcare/services/medical/internal/record/service"
 	"github.com/dreadster3/pawcare/shared/common"
 	kitjwt "github.com/go-kit/kit/auth/jwt"
@@ -15,12 +16,12 @@ type Set struct {
 	GetByIdEndpoint    endpoint.Endpoint
 }
 
-func NewSet(viper viper.Viper, recordService service.IRecordService) Set {
+func NewSet(viper viper.Viper, recordService service.IRecordService, petService pet.IPetService) Set {
 	kf := common.JWTKeyFactory(viper)
 
 	var createEndpoint endpoint.Endpoint
 	{
-		createEndpoint = makeCreateEndpoint(recordService)
+		createEndpoint = makeCreateEndpoint(recordService, petService)
 		createEndpoint = kitjwt.NewParser(kf, jwt.SigningMethodHS256, kitjwt.StandardClaimsFactory)(createEndpoint)
 	}
 

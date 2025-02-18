@@ -38,7 +38,7 @@ func RegisterHTTPRoutes(r *mux.Router, endpoints endpoint.Set, logger kitlog.Log
 	)
 
 	getHandler := kithttp.NewServer(
-		endpoints.GetEndpoint,
+		endpoints.GetByIdEndpoint,
 		common.DecodePathParameters[endpoint.GetRequest],
 		encodeResponse,
 		authenticatedOpts...,

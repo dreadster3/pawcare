@@ -12,9 +12,9 @@ import (
 )
 
 type Set struct {
-	CreateEndpoint endpoint.Endpoint
-	GetEndpoint    endpoint.Endpoint
-	GetAllEndpoint endpoint.Endpoint
+	CreateEndpoint  endpoint.Endpoint
+	GetByIdEndpoint endpoint.Endpoint
+	GetAllEndpoint  endpoint.Endpoint
 }
 
 func NewSet(viper viper.Viper, ownerService ownerservice.IOwnerService, petService petservice.IPetService, logger log.Logger) Set {
@@ -26,10 +26,10 @@ func NewSet(viper viper.Viper, ownerService ownerservice.IOwnerService, petServi
 		createEndpoint = kitjwt.NewParser(kf, jwt.SigningMethodHS256, kitjwt.StandardClaimsFactory)(createEndpoint)
 	}
 
-	var getEndpoint endpoint.Endpoint
+	var getByIdEndpoint endpoint.Endpoint
 	{
-		getEndpoint = makeGetEndpoint(ownerService, petService)
-		getEndpoint = kitjwt.NewParser(kf, jwt.SigningMethodHS256, kitjwt.StandardClaimsFactory)(getEndpoint)
+		getByIdEndpoint = makeGetByIdEndpoint(ownerService, petService)
+		getByIdEndpoint = kitjwt.NewParser(kf, jwt.SigningMethodHS256, kitjwt.StandardClaimsFactory)(getByIdEndpoint)
 	}
 
 	var getAllEndpoint endpoint.Endpoint
@@ -39,8 +39,8 @@ func NewSet(viper viper.Viper, ownerService ownerservice.IOwnerService, petServi
 	}
 
 	return Set{
-		CreateEndpoint: createEndpoint,
-		GetEndpoint:    getEndpoint,
-		GetAllEndpoint: getAllEndpoint,
+		CreateEndpoint:  createEndpoint,
+		GetByIdEndpoint: getByIdEndpoint,
+		GetAllEndpoint:  getAllEndpoint,
 	}
 }

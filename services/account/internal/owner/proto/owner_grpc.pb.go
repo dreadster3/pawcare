@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.3.0
 // - protoc             v5.28.2
-// source: service.proto
+// source: owner.proto
 
 package proto
 
@@ -27,7 +27,7 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type OwnerServiceClient interface {
-	Get(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetResponse, error)
+	Get(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetOwnerResponse, error)
 }
 
 type ownerServiceClient struct {
@@ -38,8 +38,8 @@ func NewOwnerServiceClient(cc grpc.ClientConnInterface) OwnerServiceClient {
 	return &ownerServiceClient{cc}
 }
 
-func (c *ownerServiceClient) Get(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetResponse, error) {
-	out := new(GetResponse)
+func (c *ownerServiceClient) Get(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetOwnerResponse, error) {
+	out := new(GetOwnerResponse)
 	err := c.cc.Invoke(ctx, OwnerService_Get_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -51,7 +51,7 @@ func (c *ownerServiceClient) Get(ctx context.Context, in *emptypb.Empty, opts ..
 // All implementations must embed UnimplementedOwnerServiceServer
 // for forward compatibility
 type OwnerServiceServer interface {
-	Get(context.Context, *emptypb.Empty) (*GetResponse, error)
+	Get(context.Context, *emptypb.Empty) (*GetOwnerResponse, error)
 	mustEmbedUnimplementedOwnerServiceServer()
 }
 
@@ -59,7 +59,7 @@ type OwnerServiceServer interface {
 type UnimplementedOwnerServiceServer struct {
 }
 
-func (UnimplementedOwnerServiceServer) Get(context.Context, *emptypb.Empty) (*GetResponse, error) {
+func (UnimplementedOwnerServiceServer) Get(context.Context, *emptypb.Empty) (*GetOwnerResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
 }
 func (UnimplementedOwnerServiceServer) mustEmbedUnimplementedOwnerServiceServer() {}
@@ -106,5 +106,5 @@ var OwnerService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "service.proto",
+	Metadata: "owner.proto",
 }

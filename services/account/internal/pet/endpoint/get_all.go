@@ -30,10 +30,14 @@ func makeGetAllEndpoint(petService service.IPetService) endpoint.Endpoint {
 
 		return utils.Map(pets, func(pet *domain.Pet) GetResponse {
 			return GetResponse{
-				string(pet.Id),
-				pet.Profile.Name,
-				pet.Profile.Species,
-				pet.Profile.Breed,
+				Id:          string(pet.Id),
+				OwnerId:     string(pet.OwnerId),
+				Name:        pet.Profile.Name,
+				Species:     pet.Profile.Species,
+				Breed:       pet.Profile.Breed,
+				DateOfBirth: pet.Profile.DateOfBirth,
+				Weight:      pet.Profile.Weight,
+				Gender:      string(pet.Profile.Gender),
 			}
 		}), nil
 	}
