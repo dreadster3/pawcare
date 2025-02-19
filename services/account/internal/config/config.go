@@ -6,11 +6,6 @@ import (
 	"github.com/spf13/viper"
 )
 
-const (
-	HTTPPortKey = "HTTP_PORT"
-	GRPCPortKey = "GRPC_PORT"
-)
-
 func InitConfig() viper.Viper {
 	viper := viper.New()
 
@@ -19,16 +14,16 @@ func InitConfig() viper.Viper {
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
 
-	viper.BindEnv(HTTPPortKey)
-	viper.BindEnv(GRPCPortKey)
+	viper.BindEnv(common.HTTPPortKey)
+	viper.BindEnv(common.GRPCPortKey)
 	viper.BindEnv(common.DBHostKey)
 	viper.BindEnv(common.DBPortKey)
 	viper.BindEnv(common.DBUserKey)
 	viper.BindEnv(common.DBPassKey)
 	viper.BindEnv(common.JWTSecretKey)
 
-	viper.SetDefault(HTTPPortKey, "8080")
-	viper.SetDefault(GRPCPortKey, "8081")
+	viper.SetDefault(common.HTTPPortKey, "8080")
+	viper.SetDefault(common.GRPCPortKey, "8081")
 	viper.SetDefault(common.DBHostKey, "localhost")
 	viper.SetDefault(common.DBPortKey, "27017")
 	viper.SetDefault(common.DBUserKey, "root")
@@ -38,8 +33,8 @@ func InitConfig() viper.Viper {
 	pflag.String("grpc-port", "", "GRPC Port")
 	pflag.Parse()
 
-	viper.BindPFlag(HTTPPortKey, pflag.Lookup("http-port"))
-	viper.BindPFlag(GRPCPortKey, pflag.Lookup("grpc-port"))
+	viper.BindPFlag(common.HTTPPortKey, pflag.Lookup("http-port"))
+	viper.BindPFlag(common.GRPCPortKey, pflag.Lookup("grpc-port"))
 
 	common.SetConnectionStringConfig(viper)
 

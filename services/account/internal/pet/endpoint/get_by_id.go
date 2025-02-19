@@ -21,13 +21,17 @@ type GetRequest struct {
 
 type GetResponse struct {
 	Id          string    `json:"id"`
-	OwnerId     string    `json:"owner_id"`
 	Name        string    `json:"name"`
 	DateOfBirth time.Time `json:"date_of_birth"`
 	Species     string    `json:"species"`
 	Breed       string    `json:"breed"`
 	Weight      float64   `json:"weight"`
 	Gender      string    `json:"gender"`
+	Err         error     `json:"-"`
+}
+
+func (r GetResponse) Failed() error {
+	return r.Err
 }
 
 func makeGetByIdEndpoint(ownerService ownerservice.IOwnerService, petService petservice.IPetService) endpoint.Endpoint {
@@ -54,7 +58,7 @@ func makeGetByIdEndpoint(ownerService ownerservice.IOwnerService, petService pet
 
 		pet, err := petService.FindById(ctx, domain.PetId(req.Id))
 		if err != nil {
-			return nil, err
+			return GetResponse{Err: err}, nil
 		}
 
 		if owner.Id != pet.OwnerId {
@@ -62,14 +66,13 @@ func makeGetByIdEndpoint(ownerService ownerservice.IOwnerService, petService pet
 		}
 
 		return GetResponse{
-			string(pet.Id),
-			string(pet.OwnerId),
-			pet.Profile.Name,
-			pet.Profile.DateOfBirth,
-			pet.Profile.Species,
-			pet.Profile.Breed,
-			pet.Profile.Weight,
-			string(pet.Profile.Gender),
+			Id:          string(pet.Id),
+			Name:        pet.Profile.Name,
+			DateOfBirth: pet.Profile.DateOfBirth,
+			Species:     pet.Profile.Species,
+			Breed:       pet.Profile.Breed,
+			Weight:      pet.Profile.Weight,
+			Gender:      string(pet.Profile.Gender),
 		}, nil
 	}
 }

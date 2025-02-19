@@ -9,6 +9,7 @@ import (
 
 	"github.com/dreadster3/pawcare/shared/utils"
 	kitjwt "github.com/go-kit/kit/auth/jwt"
+	"github.com/go-kit/kit/endpoint"
 	grpctransport "github.com/go-kit/kit/transport/grpc"
 	httptransport "github.com/go-kit/kit/transport/http"
 	"github.com/go-kit/log"
@@ -54,14 +55,18 @@ func GRPCDecodeToObject[T any](_ context.Context, request interface{}) (interfac
 	return req, nil
 }
 
-type errorer interface {
-	error() error
+func ErrorEncoder(err2Status func(error) int) func(_ context.Context, err error, w http.ResponseWriter) {
+	return func(_ context.Context, err error, w http.ResponseWriter) {
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.WriteHeader(err2Status(err))
+		json.NewEncoder(w).Encode(NewErrorResponse(err))
+	}
 }
 
-func EncodeResponse(encodeError func(context.Context, error, http.ResponseWriter)) func(context.Context, http.ResponseWriter, interface{}) error {
+func EncodeResponse(err2Status func(error) int) func(context.Context, http.ResponseWriter, interface{}) error {
 	return func(ctx context.Context, w http.ResponseWriter, response interface{}) error {
-		if e, ok := response.(errorer); ok && e.error() != nil {
-			encodeError(ctx, e.error(), w)
+		if e, ok := response.(endpoint.Failer); ok && e.Failed() != nil {
+			ErrorEncoder(err2Status)(ctx, e.Failed(), w)
 			return nil
 		}
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
@@ -69,22 +74,21 @@ func EncodeResponse(encodeError func(context.Context, error, http.ResponseWriter
 	}
 }
 
-func EncodeError(_ context.Context, err error, w http.ResponseWriter) {
+func DefaultErr2Status(err error) int {
 	var validationErr validator.ValidationErrors
 	if errors.As(err, &validationErr) {
-		w.WriteHeader(http.StatusBadRequest)
-		return
+		return http.StatusBadRequest
 	}
 
 	switch err {
 	case kitjwt.ErrTokenExpired, kitjwt.ErrTokenContextMissing, kitjwt.ErrTokenInvalid, kitjwt.ErrTokenMalformed, kitjwt.ErrTokenNotActive, jwt.ErrSignatureInvalid:
-		w.WriteHeader(http.StatusUnauthorized)
+		return http.StatusUnauthorized
 	case ErrAlreadyCreated:
-		w.WriteHeader(http.StatusConflict)
+		return http.StatusConflict
 	case ErrNotFound:
-		w.WriteHeader(http.StatusNotFound)
+		return http.StatusNotFound
 	default:
-		w.WriteHeader(http.StatusInternalServerError)
+		return http.StatusInternalServerError
 	}
 }
 

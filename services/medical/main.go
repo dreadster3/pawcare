@@ -72,7 +72,7 @@ func _main() error {
 	var g group.Group
 
 	{
-		httpAddr := fmt.Sprintf(":%s", viper.GetString(config.HTTPPortKey))
+		httpAddr := fmt.Sprintf(":%s", viper.GetString(common.HTTPPortKey))
 		logger := kitlog.With(logger, "transport", "http")
 		httpListenAddr, err := net.Listen("tcp", httpAddr)
 		if err != nil {
@@ -89,7 +89,7 @@ func _main() error {
 	}
 
 	{
-		grpcAddr := fmt.Sprintf(":%s", viper.GetString(config.GRPCPortKey))
+		grpcAddr := fmt.Sprintf(":%s", viper.GetString(common.GRPCPortKey))
 		logger := kitlog.With(logger, "transport", "grpc")
 		grpcListenAddr, err := net.Listen("tcp", grpcAddr)
 		if err != nil {

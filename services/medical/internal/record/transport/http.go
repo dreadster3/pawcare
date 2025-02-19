@@ -1,10 +1,6 @@
 package transport
 
 import (
-	"context"
-	"encoding/json"
-	"net/http"
-
 	"github.com/dreadster3/pawcare/services/medical/internal/record/endpoint"
 	"github.com/dreadster3/pawcare/shared/common"
 	kitjwt "github.com/go-kit/kit/auth/jwt"
@@ -17,7 +13,7 @@ import (
 func RegisterHTTPRoutes(r *mux.Router, enpoints endpoint.Set, logger log.Logger) {
 	options := []kithttp.ServerOption{
 		kithttp.ServerErrorHandler(kittransport.NewLogErrorHandler(logger)),
-		kithttp.ServerErrorEncoder(encodeError),
+		kithttp.ServerErrorEncoder(common.ErrorEncoder(err2Status)),
 		kithttp.ServerBefore(kitjwt.HTTPToContext()),
 	}
 	options = append(options, common.HTTPLoggingServerOptions(logger)...)
@@ -25,21 +21,21 @@ func RegisterHTTPRoutes(r *mux.Router, enpoints endpoint.Set, logger log.Logger)
 	createHandler := kithttp.NewServer(
 		enpoints.CreateEndpoint,
 		common.DecodeJSONRequest[endpoint.CreateRequest],
-		common.EncodeResponse(encodeError),
+		common.EncodeResponse(err2Status),
 		options...,
 	)
 
 	getByPetIdHandler := kithttp.NewServer(
 		enpoints.GetByPetIdEndpoint,
 		common.DecodePathParameters[endpoint.GetByIdRequest],
-		common.EncodeResponse(encodeError),
+		common.EncodeResponse(err2Status),
 		options...,
 	)
 
 	getByIdHandler := kithttp.NewServer(
 		enpoints.GetByIdEndpoint,
 		common.DecodePathParameters[endpoint.GetByIdRequest],
-		common.EncodeResponse(encodeError),
+		common.EncodeResponse(err2Status),
 		options...,
 	)
 
@@ -49,11 +45,9 @@ func RegisterHTTPRoutes(r *mux.Router, enpoints endpoint.Set, logger log.Logger)
 	router.Methods("GET").Path("/{id}").Handler(getByIdHandler)
 }
 
-func encodeError(ctx context.Context, err error, w http.ResponseWriter) {
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+func err2Status(err error) int {
 	switch err {
 	default:
-		common.EncodeError(ctx, err, w)
+		return common.DefaultErr2Status(err)
 	}
-	json.NewEncoder(w).Encode(common.NewErrorResponse(err))
 }

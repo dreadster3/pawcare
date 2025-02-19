@@ -16,7 +16,7 @@ import (
 type grpcServer struct {
 	proto.UnimplementedPetServiceServer
 
-	get grpc.Handler
+	getById grpc.Handler
 }
 
 func NewGRPCServer(endpoints endpoint.Set, logger log.Logger) proto.PetServiceServer {
@@ -28,18 +28,18 @@ func NewGRPCServer(endpoints endpoint.Set, logger log.Logger) proto.PetServiceSe
 
 	getByIdHandler := grpc.NewServer(
 		endpoints.GetByIdEndpoint,
-		encodeGetRequest,
-		encodeGetResponse,
+		decodeGetByIdRequest,
+		encodeGetByIdResponse,
 		options...,
 	)
 
 	return &grpcServer{
-		get: getByIdHandler,
+		getById: getByIdHandler,
 	}
 }
 
 func (srv *grpcServer) GetById(ctx context.Context, req *proto.GetByIdRequest) (*proto.GetPetResponse, error) {
-	_, res, err := srv.get.ServeGRPC(ctx, req)
+	_, res, err := srv.getById.ServeGRPC(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -47,7 +47,7 @@ func (srv *grpcServer) GetById(ctx context.Context, req *proto.GetByIdRequest) (
 	return res.(*proto.GetPetResponse), nil
 }
 
-func encodeGetRequest(_ context.Context, request interface{}) (interface{}, error) {
+func decodeGetByIdRequest(_ context.Context, request interface{}) (interface{}, error) {
 	req, ok := request.(*proto.GetByIdRequest)
 	if !ok {
 		return nil, common.ErrCastRequest
@@ -58,7 +58,7 @@ func encodeGetRequest(_ context.Context, request interface{}) (interface{}, erro
 	}, nil
 }
 
-func encodeGetResponse(_ context.Context, res interface{}) (interface{}, error) {
+func encodeGetByIdResponse(_ context.Context, res interface{}) (interface{}, error) {
 	response, ok := res.(endpoint.GetResponse)
 	if !ok {
 		return nil, common.ErrCastResponse
@@ -66,12 +66,12 @@ func encodeGetResponse(_ context.Context, res interface{}) (interface{}, error) 
 
 	return &proto.GetPetResponse{
 		Id:          response.Id,
-		OwnerId:     response.OwnerId,
 		Name:        response.Name,
 		Species:     response.Species,
 		DateOfBirth: timestamppb.New(response.DateOfBirth),
 		Weight:      response.Weight,
 		Breed:       response.Breed,
 		Gender:      response.Gender,
+		Err:         response.Err.Error(),
 	}, nil
 }

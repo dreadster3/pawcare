@@ -1,8 +1,6 @@
 package transport
 
 import (
-	"context"
-	"encoding/json"
 	"net/http"
 
 	"github.com/dreadster3/pawcare/services/account/internal/owner/endpoint"
@@ -18,7 +16,7 @@ import (
 func RegisterHTTPRoutes(r *mux.Router, endpoints endpoint.Set, logger kitlog.Logger) {
 	options := []kithttp.ServerOption{
 		kithttp.ServerErrorHandler(kittransport.NewLogErrorHandler(logger)),
-		kithttp.ServerErrorEncoder(encodeError),
+		kithttp.ServerErrorEncoder(common.ErrorEncoder(err2status)),
 		kithttp.ServerBefore(kitjwt.HTTPToContext()),
 	}
 	options = append(options, common.HTTPLoggingServerOptions(logger)...)
@@ -26,14 +24,14 @@ func RegisterHTTPRoutes(r *mux.Router, endpoints endpoint.Set, logger kitlog.Log
 	createHandler := kithttp.NewServer(
 		endpoints.CreateEndpoint,
 		common.DecodeJSONRequest[endpoint.CreateRequest],
-		common.EncodeResponse(encodeError),
+		common.EncodeResponse(err2status),
 		options...,
 	)
 
 	getHandler := kithttp.NewServer(
 		endpoints.GetEndpoint,
 		common.DecodeNoBodyRequest,
-		common.EncodeResponse(encodeError),
+		common.EncodeResponse(err2status),
 		options...,
 	)
 
@@ -42,13 +40,11 @@ func RegisterHTTPRoutes(r *mux.Router, endpoints endpoint.Set, logger kitlog.Log
 	router.Methods("GET").Path("").Handler(getHandler)
 }
 
-func encodeError(ctx context.Context, err error, w http.ResponseWriter) {
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+func err2status(err error) int {
 	switch err {
 	case service.ErrInvalidDate:
-		w.WriteHeader(http.StatusBadRequest)
+		return http.StatusBadRequest
 	default:
-		common.EncodeError(ctx, err, w)
+		return common.DefaultErr2Status(err)
 	}
-	json.NewEncoder(w).Encode(common.NewErrorResponse(err))
 }

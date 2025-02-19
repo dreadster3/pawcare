@@ -1,10 +1,6 @@
 package transport
 
 import (
-	"context"
-	"encoding/json"
-	"net/http"
-
 	"github.com/dreadster3/pawcare/services/account/internal/pet/endpoint"
 	"github.com/dreadster3/pawcare/shared/common"
 	kitjwt "github.com/go-kit/kit/auth/jwt"
@@ -17,7 +13,7 @@ import (
 func RegisterHTTPRoutes(r *mux.Router, endpoints endpoint.Set, logger kitlog.Logger) {
 	options := []kithttp.ServerOption{
 		kithttp.ServerErrorHandler(kittransport.NewLogErrorHandler(logger)),
-		kithttp.ServerErrorEncoder(encodeError),
+		kithttp.ServerErrorEncoder(common.ErrorEncoder(err2Status)),
 	}
 	options = append(options, common.HTTPLoggingServerOptions(logger)...)
 
@@ -26,21 +22,21 @@ func RegisterHTTPRoutes(r *mux.Router, endpoints endpoint.Set, logger kitlog.Log
 	createHandler := kithttp.NewServer(
 		endpoints.CreateEndpoint,
 		common.DecodeJSONRequest[endpoint.CreateRequest],
-		encodeResponse,
+		common.EncodeResponse(err2Status),
 		authenticatedOpts...,
 	)
 
 	getAllHandler := kithttp.NewServer(
 		endpoints.GetAllEndpoint,
 		common.DecodeNoBodyRequest,
-		encodeResponse,
+		common.EncodeResponse(err2Status),
 		authenticatedOpts...,
 	)
 
 	getHandler := kithttp.NewServer(
 		endpoints.GetByIdEndpoint,
 		common.DecodePathParameters[endpoint.GetRequest],
-		encodeResponse,
+		common.EncodeResponse(err2Status),
 		authenticatedOpts...,
 	)
 
@@ -50,24 +46,9 @@ func RegisterHTTPRoutes(r *mux.Router, endpoints endpoint.Set, logger kitlog.Log
 	router.Methods("GET").Path("/{id}").Handler(getHandler)
 }
 
-func encodeError(ctx context.Context, err error, w http.ResponseWriter) {
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+func err2Status(err error) int {
 	switch err {
 	default:
-		common.EncodeError(ctx, err, w)
+		return common.DefaultErr2Status(err)
 	}
-	json.NewEncoder(w).Encode(common.NewErrorResponse(err))
-}
-
-type errorer interface {
-	error() error
-}
-
-func encodeResponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
-	if e, ok := response.(errorer); ok && e.error() != nil {
-		encodeError(ctx, e.error(), w)
-		return nil
-	}
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	return json.NewEncoder(w).Encode(response)
 }

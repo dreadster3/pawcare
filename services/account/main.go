@@ -20,7 +20,7 @@ import (
 	"github.com/dreadster3/pawcare/services/account/internal/transport"
 	"github.com/dreadster3/pawcare/shared/common"
 	"github.com/dreadster3/pawcare/shared/db/mongodb"
-	kitlog "github.com/go-kit/log"
+	"github.com/go-kit/log"
 
 	"github.com/joho/godotenv"
 )
@@ -51,26 +51,26 @@ func _main() error {
 		return err
 	}
 
-	logger := kitlog.NewLogfmtLogger(kitlog.NewSyncWriter(os.Stderr))
-	logger = kitlog.With(logger, "ts", kitlog.DefaultTimestampUTC, "caller", kitlog.DefaultCaller)
+	logger := log.NewLogfmtLogger(log.NewSyncWriter(os.Stderr))
+	logger = log.With(logger, "ts", log.DefaultTimestampUTC, "caller", log.DefaultCaller)
 
-	ownerRepository := mongo.NewOwnerRepository(db, kitlog.With(logger, "repository", "owner"))
+	ownerRepository := mongo.NewOwnerRepository(db, log.With(logger, "repository", "owner"))
 	petRepository := mongo.NewPetRepository(db)
 
-	ownerService := ownerservice.NewOwnerService(ownerRepository, kitlog.With(logger, "service", "owner"))
-	petService := petservice.NewPetService(petRepository, ownerService, kitlog.With(logger, "service", "pet"))
+	ownerService := ownerservice.NewOwnerService(ownerRepository, log.With(logger, "service", "owner"))
+	petService := petservice.NewPetService(petRepository, ownerService, log.With(logger, "service", "pet"))
 
-	ownerEndpoints := ownerendpoint.NewSet(viper, ownerService, kitlog.With(logger, "endpoint", "owner"))
-	petEndpoints := petendpoint.NewSet(viper, ownerService, petService, kitlog.With(logger, "endpoint", "pet"))
+	ownerEndpoints := ownerendpoint.NewSet(viper, ownerService, log.With(logger, "endpoint", "owner"))
+	petEndpoints := petendpoint.NewSet(viper, ownerService, petService, log.With(logger, "endpoint", "pet"))
 
-	httpHandler := transport.MakeHTTPServer(ownerEndpoints, petEndpoints, kitlog.With(logger, "transport", "http"))
+	httpHandler := transport.MakeHTTPServer(ownerEndpoints, petEndpoints, log.With(logger, "transport", "http"))
 	httpHandler = accessControl(httpHandler)
 
 	var g group.Group
 
 	{
-		httpAddr := fmt.Sprintf(":%s", viper.GetString(config.HTTPPortKey))
-		logger := kitlog.With(logger, "transport", "http")
+		httpAddr := fmt.Sprintf(":%s", viper.GetString(common.HTTPPortKey))
+		logger := log.With(logger, "transport", "http")
 		httpListenAddr, err := net.Listen("tcp", httpAddr)
 		if err != nil {
 			return err
@@ -86,8 +86,8 @@ func _main() error {
 	}
 
 	{
-		grpcAddr := fmt.Sprintf(":%s", viper.GetString(config.GRPCPortKey))
-		logger := kitlog.With(logger, "transport", "grpc")
+		grpcAddr := fmt.Sprintf(":%s", viper.GetString(common.GRPCPortKey))
+		logger := log.With(logger, "transport", "grpc")
 		grpcListenAddr, err := net.Listen("tcp", grpcAddr)
 		if err != nil {
 			return err

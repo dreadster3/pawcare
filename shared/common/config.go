@@ -7,6 +7,8 @@ import (
 )
 
 var (
+	HTTPPortKey           = "HTTP_PORT"
+	GRPCPortKey           = "GRPC_PORT"
 	DBHostKey             = "DB_HOST"
 	DBPortKey             = "DB_PORT"
 	DBUserKey             = "DB_USER"
