@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/dreadster3/pawcare/services/account/pkg/client/pet"
 	"github.com/dreadster3/pawcare/services/medical/internal/record/domain"
 	"github.com/dreadster3/pawcare/services/medical/internal/record/service"
 	"github.com/dreadster3/pawcare/shared/common"
@@ -19,32 +18,29 @@ type CreateRequest struct {
 	Date        time.Time `json:"date" validate:"required"`
 }
 
-type CreateResponse struct {
-	Id string `json:"id"`
-}
-
-func makeCreateEndpoint(recordService service.IRecordService, petService pet.IPetService) endpoint.Endpoint {
+func makeCreateEndpoint(recordService service.IRecordService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		req, ok := request.(CreateRequest)
 		if !ok {
-			return nil, common.ErrCastRequest
+			return GetResponse{Err: common.ErrCastRequest}, nil
 		}
 
 		if err := validator.New().Struct(req); err != nil {
-			return nil, err
-		}
-
-		if _, err := petService.GetById(ctx, pet.PetId(req.PetId)); err != nil {
-			return nil, err
+			return GetResponse{Err: err}, nil
 		}
 
 		petId := domain.PetId(req.PetId)
 		recordInfo := domain.NewRecordInfo(domain.RecordType(req.Type), req.Description, req.Date)
 		record, err := recordService.Create(ctx, petId, recordInfo)
 		if err != nil {
-			return nil, err
+			return GetResponse{Err: err}, nil
 		}
 
-		return CreateResponse{string(record.Id)}, nil
+		return GetResponse{
+			Id:          string(record.Id),
+			Type:        string(record.RecordInfo.Type),
+			Date:        record.RecordInfo.Date,
+			Description: recordInfo.Description,
+		}, nil
 	}
 }

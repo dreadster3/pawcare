@@ -53,7 +53,7 @@ func decodeGetByIdRequest(_ context.Context, request interface{}) (interface{}, 
 		return nil, common.ErrCastRequest
 	}
 
-	return endpoint.GetRequest{
+	return endpoint.GetByIdRequest{
 		Id: req.Id,
 	}, nil
 }
@@ -72,6 +72,6 @@ func encodeGetByIdResponse(_ context.Context, res interface{}) (interface{}, err
 		Weight:      response.Weight,
 		Breed:       response.Breed,
 		Gender:      response.Gender,
-		Err:         response.Err.Error(),
+		Err:         common.Err2Str(response.Err),
 	}, nil
 }

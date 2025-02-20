@@ -33,9 +33,9 @@ func RegisterHTTPRoutes(r *mux.Router, endpoints endpoint.Set, logger kitlog.Log
 		authenticatedOpts...,
 	)
 
-	getHandler := kithttp.NewServer(
+	getByIdHandler := kithttp.NewServer(
 		endpoints.GetByIdEndpoint,
-		common.DecodePathParameters[endpoint.GetRequest],
+		common.DecodePathParameters[endpoint.GetByIdRequest],
 		common.EncodeResponse(err2Status),
 		authenticatedOpts...,
 	)
@@ -43,7 +43,7 @@ func RegisterHTTPRoutes(r *mux.Router, endpoints endpoint.Set, logger kitlog.Log
 	router := r.PathPrefix("/pets").Subrouter()
 	router.Methods("POST").Path("").Handler(createHandler)
 	router.Methods("GET").Path("").Handler(getAllHandler)
-	router.Methods("GET").Path("/{id}").Handler(getHandler)
+	router.Methods("GET").Path("/{id}").Handler(getByIdHandler)
 }
 
 func err2Status(err error) int {

@@ -21,33 +21,50 @@ type GetResponse struct {
 	Type        string    `json:"type"`
 	Date        time.Time `json:"date"`
 	Description string    `json:"description"`
+
+	Err error `json:"-"`
+}
+
+func (r GetResponse) Failed() error {
+	return r.Err
+}
+
+type GetManyResponse struct {
+	Records []GetResponse `json:"records"`
+	Err     error         `json:"-"`
+}
+
+func (r GetManyResponse) Failed() error {
+	return r.Err
 }
 
 func makeGetByPetIdEndpoint(recordService service.IRecordService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		req, ok := request.(GetByIdRequest)
 		if !ok {
-			return nil, common.ErrCastRequest
+			return GetResponse{Err: common.ErrCastRequest}, nil
 		}
 
 		if err := validator.New().Struct(req); err != nil {
-			return nil, err
+			return GetResponse{Err: err}, nil
 		}
 
 		petId := domain.PetId(req.Id)
-		records, err := recordService.FindByPetId(ctx, petId)
+		records, err := recordService.GetByPetId(ctx, petId)
 		if err != nil {
-			return nil, err
+			return GetResponse{Err: err}, nil
 		}
 
-		return utils.Map(records, func(r *domain.Record) GetResponse {
-			return GetResponse{
-				Id:          string(r.Id),
-				Type:        string(r.RecordInfo.Type),
-				Date:        r.RecordInfo.Date,
-				Description: r.RecordInfo.Description,
-			}
-		}), nil
+		return GetManyResponse{
+			Records: utils.Map(records, func(r *domain.Record) GetResponse {
+				return GetResponse{
+					Id:          string(r.Id),
+					Type:        string(r.RecordInfo.Type),
+					Date:        r.RecordInfo.Date,
+					Description: r.RecordInfo.Description,
+				}
+			}),
+		}, nil
 	}
 }
 
@@ -55,17 +72,17 @@ func makeGetByIdEndpoint(recordService service.IRecordService) endpoint.Endpoint
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		req, ok := request.(GetByIdRequest)
 		if !ok {
-			return nil, common.ErrCastRequest
+			return GetResponse{Err: common.ErrCastRequest}, nil
 		}
 
 		if err := validator.New().Struct(req); err != nil {
-			return nil, err
+			return GetResponse{Err: err}, nil
 		}
 
 		id := domain.RecordId(req.Id)
-		record, err := recordService.FindById(ctx, id)
+		record, err := recordService.GetById(ctx, id)
 		if err != nil {
-			return nil, err
+			return GetResponse{Err: err}, nil
 		}
 
 		return GetResponse{

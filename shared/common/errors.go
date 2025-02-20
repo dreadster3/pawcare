@@ -21,3 +21,11 @@ func NewErrorResponse(err error) ErrorResponse {
 		Error: err.Error(),
 	}
 }
+
+func Err2Str(err error) string {
+	if err == nil {
+		return ""
+	}
+
+	return err.Error()
+}

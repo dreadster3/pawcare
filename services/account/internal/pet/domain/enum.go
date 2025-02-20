@@ -3,7 +3,7 @@ package domain
 type EGender string
 
 const (
-	EGenderMale   EGender = "Male"
-	EGenderFemale EGender = "Female"
-	EGenderOther  EGender = "Other"
+	EGenderMale   EGender = "male"
+	EGenderFemale EGender = "female"
+	EGenderOther  EGender = "other"
 )

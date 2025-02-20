@@ -1,19 +1,17 @@
 package service
 
 import (
-	ownerdomain "github.com/dreadster3/pawcare/services/account/internal/owner/domain"
 	ownerservice "github.com/dreadster3/pawcare/services/account/internal/owner/service"
 	petdomain "github.com/dreadster3/pawcare/services/account/internal/pet/domain"
+	"github.com/dreadster3/pawcare/shared/common"
 	"github.com/go-kit/log"
 	"golang.org/x/net/context"
 )
 
 type IPetService interface {
-	FindById(ctx context.Context, petId petdomain.PetId) (*petdomain.Pet, error)
-	FindByUserId(ctx context.Context, userId ownerdomain.UserId) ([]*petdomain.Pet, error)
-	FindByOwnerId(ctx context.Context, ownerId ownerdomain.OwnerId) ([]*petdomain.Pet, error)
-	Create(ctx context.Context, userId ownerdomain.UserId, petProfile petdomain.PetProfile) (*petdomain.Pet, error)
-	Update(ctx context.Context, pet *petdomain.Pet) (*petdomain.Pet, error)
+	GetAll(ctx context.Context) ([]*petdomain.Pet, error)
+	GetById(ctx context.Context, id petdomain.PetId) (*petdomain.Pet, error)
+	Create(ctx context.Context, petProfile petdomain.PetProfile) (*petdomain.Pet, error)
 }
 
 type petService struct {
@@ -29,25 +27,35 @@ func NewPetService(petRepository petdomain.IPetRepository, ownerService ownerser
 	return svc
 }
 
-func (svc *petService) FindById(ctx context.Context, petId petdomain.PetId) (*petdomain.Pet, error) {
-	return svc.petRepository.FindById(ctx, petId)
-}
-
-func (svc *petService) FindByUserId(ctx context.Context, userId ownerdomain.UserId) ([]*petdomain.Pet, error) {
-	owner, err := svc.ownerService.FindByUserId(ctx, userId)
+func (svc *petService) GetAll(ctx context.Context) ([]*petdomain.Pet, error) {
+	owner, err := svc.ownerService.Get(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	return svc.FindByOwnerId(ctx, owner.Id)
+	return svc.petRepository.FindByOwnerId(ctx, owner.Id)
 }
 
-func (svc *petService) FindByOwnerId(ctx context.Context, ownerId ownerdomain.OwnerId) ([]*petdomain.Pet, error) {
-	return svc.petRepository.FindByOwnerId(ctx, ownerId)
+func (svc *petService) GetById(ctx context.Context, id petdomain.PetId) (*petdomain.Pet, error) {
+	owner, err := svc.ownerService.Get(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	pet, err := svc.petRepository.FindById(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	if pet.OwnerId != owner.Id {
+		return nil, common.ErrUnauthorized
+	}
+
+	return pet, nil
 }
 
-func (svc *petService) Create(ctx context.Context, userId ownerdomain.UserId, petProfile petdomain.PetProfile) (*petdomain.Pet, error) {
-	owner, err := svc.ownerService.FindByUserId(ctx, userId)
+func (svc *petService) Create(ctx context.Context, petProfile petdomain.PetProfile) (*petdomain.Pet, error) {
+	owner, err := svc.ownerService.Get(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -58,12 +66,4 @@ func (svc *petService) Create(ctx context.Context, userId ownerdomain.UserId, pe
 	}
 
 	return petpetdomain, nil
-}
-
-func (svc *petService) Update(ctx context.Context, pet *petdomain.Pet) (*petdomain.Pet, error) {
-	if err := svc.petRepository.Update(ctx, pet); err != nil {
-		return nil, err
-	}
-
-	return pet, nil
 }

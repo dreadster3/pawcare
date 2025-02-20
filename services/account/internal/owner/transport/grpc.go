@@ -57,5 +57,6 @@ func encodeGetResponse(_ context.Context, res interface{}) (interface{}, error) 
 		Id:          response.Id,
 		Name:        response.Name,
 		DateOfBirth: response.DateOfBirth.String(),
+		Err:         common.Err2Str(response.Err),
 	}, nil
 }

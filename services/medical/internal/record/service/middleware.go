@@ -20,20 +20,20 @@ func newLoggingMiddleware(logger log.Logger) middleware {
 	}
 }
 
-func (mw *loggingMiddleware) FindById(ctx context.Context, id domain.RecordId) (record *domain.Record, err error) {
+func (mw *loggingMiddleware) GetById(ctx context.Context, id domain.RecordId) (record *domain.Record, err error) {
 	defer func() {
-		mw.logger.Log("method", "FindById", "id", id, "record", record, "err", err)
+		mw.logger.Log("method", "GetById", "id", id, "record", record, "err", err)
 	}()
 
-	return mw.next.FindById(ctx, id)
+	return mw.next.GetById(ctx, id)
 }
 
-func (mw *loggingMiddleware) FindByPetId(ctx context.Context, petId domain.PetId) (records []*domain.Record, err error) {
+func (mw *loggingMiddleware) GetByPetId(ctx context.Context, petId domain.PetId) (records []*domain.Record, err error) {
 	defer func() {
-		mw.logger.Log("method", "FindByPetId", "petId", petId, "records", len(records), "err", err)
+		mw.logger.Log("method", "GetByPetId", "petId", petId, "records", len(records), "err", err)
 	}()
 
-	return mw.next.FindByPetId(ctx, petId)
+	return mw.next.GetByPetId(ctx, petId)
 }
 
 func (mw *loggingMiddleware) Create(ctx context.Context, petId domain.PetId, recordInfo domain.RecordInfo) (record *domain.Record, err error) {
@@ -42,12 +42,4 @@ func (mw *loggingMiddleware) Create(ctx context.Context, petId domain.PetId, rec
 	}()
 
 	return mw.next.Create(ctx, petId, recordInfo)
-}
-
-func (mw *loggingMiddleware) Update(ctx context.Context, record *domain.Record) (err error) {
-	defer func() {
-		mw.logger.Log("method", "Update", "record", record, "err", err)
-	}()
-
-	return mw.next.Update(ctx, record)
 }

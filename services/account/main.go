@@ -61,7 +61,7 @@ func _main() error {
 	petService := petservice.NewPetService(petRepository, ownerService, log.With(logger, "service", "pet"))
 
 	ownerEndpoints := ownerendpoint.NewSet(viper, ownerService, log.With(logger, "endpoint", "owner"))
-	petEndpoints := petendpoint.NewSet(viper, ownerService, petService, log.With(logger, "endpoint", "pet"))
+	petEndpoints := petendpoint.NewSet(viper, petService, log.With(logger, "endpoint", "pet"))
 
 	httpHandler := transport.MakeHTTPServer(ownerEndpoints, petEndpoints, log.With(logger, "transport", "http"))
 	httpHandler = accessControl(httpHandler)
