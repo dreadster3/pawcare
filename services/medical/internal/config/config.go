@@ -6,6 +6,10 @@ import (
 	"github.com/spf13/viper"
 )
 
+const (
+	PetServiceHostKey = "PET_SERVICE_HOST"
+)
+
 func InitConfig() viper.Viper {
 	viper := viper.New()
 
@@ -21,6 +25,7 @@ func InitConfig() viper.Viper {
 	viper.BindEnv(common.DBUserKey)
 	viper.BindEnv(common.DBPassKey)
 	viper.BindEnv(common.JWTSecretKey)
+	viper.BindEnv(PetServiceHostKey)
 
 	viper.SetDefault(common.HTTPPortKey, "8080")
 	viper.SetDefault(common.GRPCPortKey, "8081")
