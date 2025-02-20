@@ -100,8 +100,9 @@ func HTTPLoggingServerOptions(logger log.Logger) []httptransport.ServerOption {
 			path := r.URL.Path
 			contentLength := r.ContentLength
 			userAgent := r.UserAgent()
+			requestId := ctx.Value(utils.RequestIdContextKey).(string)
 
-			logger.Log("method", method, "path", path, "client_ip", clientIp, "user_agent", userAgent, "content_length", contentLength, "msg", "Incoming request")
+			logger.Log("request_id", requestId, "method", method, "path", path, "client_ip", clientIp, "user_agent", userAgent, "content_length", contentLength, "msg", "Incoming request")
 
 			return ctx
 		}),
@@ -110,9 +111,10 @@ func HTTPLoggingServerOptions(logger log.Logger) []httptransport.ServerOption {
 			method := r.Method
 			path := r.URL.Path
 			clientIp := r.RemoteAddr
+			requestId := ctx.Value(utils.RequestIdContextKey).(string)
 			userAgent := r.UserAgent()
 
-			logger.Log("method", method, "path", path, "client_ip", clientIp, "user_agent", userAgent, "status_code", code, "msg", "Outgoing response")
+			logger.Log("request_id", requestId, "method", method, "path", path, "client_ip", clientIp, "user_agent", userAgent, "status_code", code, "msg", "Outgoing response")
 		}),
 	}
 }
@@ -120,7 +122,8 @@ func HTTPLoggingServerOptions(logger log.Logger) []httptransport.ServerOption {
 func GRPCLoggingServerOptions(logger log.Logger) []grpctransport.ServerOption {
 	return []grpctransport.ServerOption{
 		grpctransport.ServerBefore(func(ctx context.Context, md metadata.MD) context.Context {
-			logs := []interface{}{}
+			requestId := ctx.Value(utils.RequestIdContextKey).(string)
+			logs := []interface{}{"request_id", requestId}
 			if userAgents, ok := md["user-agent"]; ok {
 				logs = append(logs, "user_agent", strings.Join(userAgents, ";"))
 			}
@@ -136,7 +139,8 @@ func GRPCLoggingServerOptions(logger log.Logger) []grpctransport.ServerOption {
 			return ctx
 		}),
 		grpctransport.ServerFinalizer(func(ctx context.Context, err error) {
-			logs := []interface{}{}
+			requestId := ctx.Value(utils.RequestIdContextKey).(string)
+			logs := []interface{}{"request_id", requestId}
 
 			if md, ok := metadata.FromIncomingContext(ctx); ok {
 				if userAgents, ok := md["user-agent"]; ok {

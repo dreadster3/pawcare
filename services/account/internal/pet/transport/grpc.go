@@ -6,6 +6,7 @@ import (
 	"github.com/dreadster3/pawcare/services/account/internal/pet/endpoint"
 	"github.com/dreadster3/pawcare/services/account/internal/pet/proto"
 	"github.com/dreadster3/pawcare/shared/common"
+	"github.com/dreadster3/pawcare/shared/utils"
 	kitjwt "github.com/go-kit/kit/auth/jwt"
 	"github.com/go-kit/kit/transport"
 	"github.com/go-kit/kit/transport/grpc"
@@ -23,6 +24,7 @@ func NewGRPCServer(endpoints endpoint.Set, logger log.Logger) proto.PetServiceSe
 	options := []grpc.ServerOption{
 		grpc.ServerErrorHandler(transport.NewLogErrorHandler(logger)),
 		grpc.ServerBefore(kitjwt.GRPCToContext()),
+		grpc.ServerBefore(utils.RequestIdGRPCToContext()),
 	}
 	options = append(options, common.GRPCLoggingServerOptions(logger)...)
 

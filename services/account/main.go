@@ -55,7 +55,7 @@ func _main() error {
 	logger = log.With(logger, "ts", log.DefaultTimestampUTC, "caller", log.DefaultCaller)
 
 	ownerRepository := mongo.NewOwnerRepository(db, log.With(logger, "repository", "owner"))
-	petRepository := mongo.NewPetRepository(db)
+	petRepository := mongo.NewPetRepository(db, log.With(logger, "repository", "pet"))
 
 	ownerService := ownerservice.NewOwnerService(ownerRepository, log.With(logger, "service", "owner"))
 	petService := petservice.NewPetService(petRepository, ownerService, log.With(logger, "service", "pet"))

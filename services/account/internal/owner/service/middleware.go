@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/dreadster3/pawcare/services/account/internal/owner/domain"
+	"github.com/dreadster3/pawcare/shared/utils"
 	"github.com/go-kit/log"
 	"github.com/go-playground/validator/v10"
 )
@@ -22,9 +23,14 @@ func newLoggingMiddleware(logger log.Logger) middleware {
 	}
 }
 
+func (mw *loggingMiddleware) Logger(ctx context.Context) log.Logger {
+	requestId := ctx.Value(utils.RequestIdContextKey).(string)
+	return log.With(mw.logger, "request_id", requestId)
+}
+
 func (mw *loggingMiddleware) Get(ctx context.Context) (owner *domain.Owner, err error) {
 	defer func() {
-		mw.logger.Log("method", "Get", "owner", owner, "err", err)
+		mw.Logger(ctx).Log("method", "Get", "owner", owner, "err", err)
 	}()
 
 	return mw.next.Get(ctx)
@@ -32,7 +38,7 @@ func (mw *loggingMiddleware) Get(ctx context.Context) (owner *domain.Owner, err 
 
 func (mw *loggingMiddleware) Create(ctx context.Context, ownerProfile domain.OwnerProfile) (owner *domain.Owner, err error) {
 	defer func() {
-		mw.logger.Log("method", "Create", "ownerProfile", ownerProfile, "owner", owner, "err", err)
+		mw.Logger(ctx).Log("method", "Create", "ownerProfile", ownerProfile, "owner", owner, "err", err)
 	}()
 
 	return mw.next.Create(ctx, ownerProfile)

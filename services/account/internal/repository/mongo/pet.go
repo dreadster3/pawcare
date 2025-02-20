@@ -7,6 +7,7 @@ import (
 	"github.com/dreadster3/pawcare/services/account/internal/pet/domain"
 	"github.com/dreadster3/pawcare/services/account/internal/repository"
 	"github.com/dreadster3/pawcare/shared/utils"
+	"github.com/go-kit/kit/log"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -68,8 +69,11 @@ type petRepository struct {
 	db *mongo.Database
 }
 
-func NewPetRepository(db *mongo.Database) domain.IPetRepository {
-	return &petRepository{db}
+func NewPetRepository(db *mongo.Database, logger log.Logger) domain.IPetRepository {
+	var repository domain.IPetRepository
+	repository = &petRepository{db}
+	repository = newPetLoggingMiddleware(logger)(repository)
+	return repository
 }
 
 func (r *petRepository) Collection() *mongo.Collection {

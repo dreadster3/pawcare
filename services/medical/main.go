@@ -11,6 +11,7 @@ import (
 
 	"github.com/oklog/oklog/pkg/group"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/dreadster3/pawcare/services/account/pkg/client/pet"
 	"github.com/dreadster3/pawcare/services/medical/internal/config"
@@ -54,7 +55,7 @@ func _main() error {
 	logger := kitlog.NewLogfmtLogger(kitlog.NewSyncWriter(os.Stderr))
 	logger = kitlog.With(logger, "ts", kitlog.DefaultTimestampUTC, "caller", kitlog.DefaultCaller)
 
-	conn, err := grpc.Dial("localhost:8081", grpc.WithInsecure())
+	conn, err := grpc.Dial("localhost:8081", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return err
 	}

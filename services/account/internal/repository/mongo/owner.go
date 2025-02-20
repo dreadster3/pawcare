@@ -5,7 +5,6 @@ import (
 
 	"github.com/dreadster3/pawcare/services/account/internal/owner/domain"
 	"github.com/dreadster3/pawcare/services/account/internal/repository"
-	"github.com/dreadster3/pawcare/services/account/internal/repository/middleware"
 	"github.com/go-kit/log"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -57,9 +56,11 @@ type ownerRepository struct {
 }
 
 func NewOwnerRepository(db *mongo.Database, logger log.Logger) domain.IOwnerRepository {
-	repository := &ownerRepository{db}
+	var repository domain.IOwnerRepository
+	repository = &ownerRepository{db}
+	repository = newOwnerLoggingMiddleware(logger)(repository)
 
-	return middleware.OwnerWarpMiddleware(repository, logger)
+	return repository
 }
 
 func (r *ownerRepository) Collection() *mongo.Collection {

@@ -3,6 +3,7 @@ package transport
 import (
 	"github.com/dreadster3/pawcare/services/account/internal/pet/endpoint"
 	"github.com/dreadster3/pawcare/shared/common"
+	"github.com/dreadster3/pawcare/shared/utils"
 	kitjwt "github.com/go-kit/kit/auth/jwt"
 	kittransport "github.com/go-kit/kit/transport"
 	kithttp "github.com/go-kit/kit/transport/http"
@@ -14,6 +15,8 @@ func RegisterHTTPRoutes(r *mux.Router, endpoints endpoint.Set, logger kitlog.Log
 	options := []kithttp.ServerOption{
 		kithttp.ServerErrorHandler(kittransport.NewLogErrorHandler(logger)),
 		kithttp.ServerErrorEncoder(common.ErrorEncoder(err2Status)),
+		kithttp.ServerBefore(kitjwt.HTTPToContext()),
+		kithttp.ServerBefore(utils.RequestIdHTTPToContext()),
 	}
 	options = append(options, common.HTTPLoggingServerOptions(logger)...)
 

@@ -64,7 +64,9 @@ type recordRepository struct {
 }
 
 func NewRecordRepository(db *mongo.Database, logger log.Logger) domain.IRecordRepository {
-	repository := &recordRepository{db}
+	var repository domain.IRecordRepository
+	repository = &recordRepository{db}
+	repository = newLoggingMiddleware(logger)(repository)
 
 	return repository
 }

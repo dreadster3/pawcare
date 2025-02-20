@@ -7,9 +7,11 @@ require (
 	github.com/go-kit/log v0.2.0
 	github.com/go-playground/validator/v10 v10.20.0
 	github.com/golang-jwt/jwt/v4 v4.0.0
+	github.com/google/uuid v1.6.0
 	github.com/gorilla/mux v1.8.1
 	github.com/joho/godotenv v1.5.1
 	github.com/oklog/oklog v0.3.2
+	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.19.0
 	go.mongodb.org/mongo-driver v1.17.1
 	golang.org/x/net v0.25.0
@@ -38,7 +40,6 @@ require (
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/spf13/afero v1.11.0 // indirect
 	github.com/spf13/cast v1.6.0 // indirect
-	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.1.2 // indirect
