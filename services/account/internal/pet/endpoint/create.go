@@ -38,8 +38,13 @@ func makePetCreateEndpoint(petService petservice.IPetService) endpoint.Endpoint 
 		}
 
 		return GetResponse{
-			Id:   string(pet.Id),
-			Name: pet.Profile.Name,
+			Id:          string(pet.Id),
+			Name:        pet.Profile.Name,
+			DateOfBirth: pet.Profile.DateOfBirth,
+			Species:     pet.Profile.Species,
+			Breed:       pet.Profile.Breed,
+			Weight:      pet.Profile.Weight,
+			Gender:      string(pet.Profile.Gender),
 		}, nil
 	}
 }
