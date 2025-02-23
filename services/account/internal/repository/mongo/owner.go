@@ -17,14 +17,14 @@ const (
 
 type owner struct {
 	Id          primitive.ObjectID `bson:"_id"`
-	UserId      primitive.ObjectID `bson:"user_id"`
+	UserId      string             `bson:"user_id"`
 	Name        string             `bson:"name"`
 	DateOfBirth primitive.DateTime `bson:"date_of_birth"`
 }
 
 func (o *owner) ToModel() *domain.Owner {
 	ownerProfile := domain.NewOwnerProfile(o.Name, o.DateOfBirth.Time())
-	owner := domain.NewOwner(domain.UserId(o.UserId.Hex()), ownerProfile)
+	owner := domain.NewOwner(domain.UserId(o.UserId), ownerProfile)
 	owner.Id = domain.OwnerId(o.Id.Hex())
 	return owner
 }
@@ -38,14 +38,9 @@ func fromOwnerModel(o domain.Owner) (*owner, error) {
 		id = primitive.NewObjectID()
 	}
 
-	userId, err := primitive.ObjectIDFromHex(string(o.UserId))
-	if err != nil {
-		return nil, err
-	}
-
 	return &owner{
 		Id:          id,
-		UserId:      userId,
+		UserId:      string(o.UserId),
 		Name:        o.Profile.Name,
 		DateOfBirth: primitive.NewDateTimeFromTime(o.Profile.DateOfBirth),
 	}, nil
@@ -86,13 +81,8 @@ func (r *ownerRepository) FindById(ctx context.Context, id domain.OwnerId) (*dom
 }
 
 func (r *ownerRepository) FindByUserId(ctx context.Context, id domain.UserId) (*domain.Owner, error) {
-	objectId, err := primitive.ObjectIDFromHex(string(id))
-	if err != nil {
-		return nil, err
-	}
-
 	var result owner
-	if err := r.Collection().FindOne(ctx, bson.M{"user_id": objectId}).Decode(&result); err != nil {
+	if err := r.Collection().FindOne(ctx, bson.M{"user_id": id}).Decode(&result); err != nil {
 		if err == mongo.ErrNoDocuments {
 			return nil, repository.ErrNotFound
 		}

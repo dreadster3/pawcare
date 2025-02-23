@@ -20,6 +20,9 @@ func InitConfig() viper.Viper {
 	viper.BindEnv(common.DBPortKey)
 	viper.BindEnv(common.DBUserKey)
 	viper.BindEnv(common.DBPassKey)
+	viper.BindEnv(common.IntrospectionEndpointKey)
+	viper.BindEnv(common.ClientIdKey)
+	viper.BindEnv(common.ClientSecretKey)
 	viper.BindEnv(common.JWTSecretKey)
 
 	viper.SetDefault(common.HTTPPortKey, "8080")

@@ -7,14 +7,17 @@ import (
 )
 
 var (
-	HTTPPortKey           = "HTTP_PORT"
-	GRPCPortKey           = "GRPC_PORT"
-	DBHostKey             = "DB_HOST"
-	DBPortKey             = "DB_PORT"
-	DBUserKey             = "DB_USER"
-	DBPassKey             = "DB_PASS"
-	DBConnectionStringKey = "DB_CONNECTION_STRING"
-	JWTSecretKey          = "JWT_SECRET"
+	HTTPPortKey              = "HTTP_PORT"
+	GRPCPortKey              = "GRPC_PORT"
+	DBHostKey                = "DB_HOST"
+	DBPortKey                = "DB_PORT"
+	DBUserKey                = "DB_USER"
+	DBPassKey                = "DB_PASS"
+	DBConnectionStringKey    = "DB_CONNECTION_STRING"
+	JWTSecretKey             = "JWT_SECRET"
+	IntrospectionEndpointKey = "INTROSPECTION_ENDPOINT"
+	ClientIdKey              = "CLIENT_ID"
+	ClientSecretKey          = "CLIENT_SECRET"
 )
 
 func SetConnectionStringConfig(viper *viper.Viper) {
