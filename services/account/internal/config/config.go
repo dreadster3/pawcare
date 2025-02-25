@@ -23,7 +23,6 @@ func InitConfig() viper.Viper {
 	viper.BindEnv(common.IntrospectionEndpointKey)
 	viper.BindEnv(common.ClientIdKey)
 	viper.BindEnv(common.ClientSecretKey)
-	viper.BindEnv(common.JWTSecretKey)
 
 	viper.SetDefault(common.HTTPPortKey, "8080")
 	viper.SetDefault(common.GRPCPortKey, "8081")

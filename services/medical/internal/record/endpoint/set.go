@@ -2,10 +2,8 @@ package endpoint
 
 import (
 	"github.com/dreadster3/pawcare/services/medical/internal/record/service"
-	"github.com/dreadster3/pawcare/shared/common"
-	kitjwt "github.com/go-kit/kit/auth/jwt"
+	"github.com/dreadster3/pawcare/shared/oauth"
 	"github.com/go-kit/kit/endpoint"
-	"github.com/golang-jwt/jwt/v4"
 	"github.com/spf13/viper"
 )
 
@@ -16,24 +14,22 @@ type Set struct {
 }
 
 func NewSet(viper viper.Viper, recordService service.IRecordService) Set {
-	kf := common.JWTKeyFactory(viper)
-
 	var createEndpoint endpoint.Endpoint
 	{
 		createEndpoint = makeCreateEndpoint(recordService)
-		createEndpoint = kitjwt.NewParser(kf, jwt.SigningMethodHS256, kitjwt.StandardClaimsFactory)(createEndpoint)
+		createEndpoint = oauth.NewConfiguredIntrospectionMiddleware(viper)(createEndpoint)
 	}
 
 	var getByPetIdEndpoint endpoint.Endpoint
 	{
 		getByPetIdEndpoint = makeGetByPetIdEndpoint(recordService)
-		getByPetIdEndpoint = kitjwt.NewParser(kf, jwt.SigningMethodHS256, kitjwt.StandardClaimsFactory)(getByPetIdEndpoint)
+		getByPetIdEndpoint = oauth.NewConfiguredIntrospectionMiddleware(viper)(getByPetIdEndpoint)
 	}
 
 	var getByIdEndpoint endpoint.Endpoint
 	{
 		getByIdEndpoint = makeGetByIdEndpoint(recordService)
-		getByIdEndpoint = kitjwt.NewParser(kf, jwt.SigningMethodHS256, kitjwt.StandardClaimsFactory)(getByIdEndpoint)
+		getByIdEndpoint = oauth.NewConfiguredIntrospectionMiddleware(viper)(getByIdEndpoint)
 	}
 
 	return Set{
