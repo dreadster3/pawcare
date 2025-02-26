@@ -7,13 +7,16 @@ import (
 )
 
 var (
-	HTTPPortKey              = "HTTP_PORT"
-	GRPCPortKey              = "GRPC_PORT"
-	DBHostKey                = "DB_HOST"
-	DBPortKey                = "DB_PORT"
-	DBUserKey                = "DB_USER"
-	DBPassKey                = "DB_PASS"
-	DBConnectionStringKey    = "DB_CONNECTION_STRING"
+	InsecureSkipVerifyKey = "INSECURE_SKIP_VERIFY"
+	HTTPPortKey           = "HTTP_PORT"
+	GRPCPortKey           = "GRPC_PORT"
+	DBHostKey             = "DB_HOST"
+	DBPortKey             = "DB_PORT"
+	DBUserKey             = "DB_USER"
+	DBPassKey             = "DB_PASS"
+	DBConnectionStringKey = "DB_CONNECTION_STRING"
+	CertsEndpointKey      = "CERTS_ENDPOINT"
+
 	JWTSecretKey             = "JWT_SECRET"
 	IntrospectionEndpointKey = "INTROSPECTION_ENDPOINT"
 	ClientIdKey              = "CLIENT_ID"

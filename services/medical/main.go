@@ -65,7 +65,10 @@ func _main() error {
 	repository := mongo.NewRecordRepository(db, kitlog.With(logger, "repository", "record"))
 
 	service := service.NewRecordService(repository, petService, kitlog.With(logger, "service", "record"))
-	endpoints := endpoint.NewSet(viper, service)
+	endpoints, err := endpoint.NewSet(viper, service)
+	if err != nil {
+		return err
+	}
 
 	httpHandler := transport.MakeHTTPServer(endpoints, kitlog.With(logger, "transport", "http"))
 	httpHandler = accessControl(httpHandler)

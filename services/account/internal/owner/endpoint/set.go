@@ -1,10 +1,12 @@
 package endpoint
 
 import (
+	"github.com/MicahParks/keyfunc/v3"
 	"github.com/dreadster3/pawcare/services/account/internal/owner/service"
-	"github.com/dreadster3/pawcare/shared/oauth"
+	"github.com/dreadster3/pawcare/shared/common"
 	"github.com/go-kit/kit/endpoint"
 	"github.com/go-kit/log"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/spf13/viper"
 )
 
@@ -13,22 +15,26 @@ type Set struct {
 	GetEndpoint    endpoint.Endpoint
 }
 
-func NewSet(viper viper.Viper, ownerService service.IOwnerService, logger log.Logger) Set {
+func NewSet(viper viper.Viper, ownerService service.IOwnerService, logger log.Logger) (Set, error) {
+	kf, err := keyfunc.NewDefault([]string{viper.GetString(common.CertsEndpointKey)})
+	if err != nil {
+		return Set{}, err
+	}
 
 	var createEndpoint endpoint.Endpoint
 	{
 		createEndpoint = makeCreateEndpoint(ownerService)
-		createEndpoint = oauth.NewConfiguredIntrospectionMiddleware(viper)(createEndpoint)
+		createEndpoint = common.NewParser(kf.Keyfunc, jwt.SigningMethodRS256, common.RegisteredClaimsFactory)(createEndpoint)
 	}
 
 	var getEndpoint endpoint.Endpoint
 	{
 		getEndpoint = makeGetEndpoint(ownerService)
-		getEndpoint = oauth.NewConfiguredIntrospectionMiddleware(viper)(getEndpoint)
+		getEndpoint = common.NewParser(kf.Keyfunc, jwt.SigningMethodRS256, common.RegisteredClaimsFactory)(getEndpoint)
 	}
 
 	return Set{
 		CreateEndpoint: createEndpoint,
 		GetEndpoint:    getEndpoint,
-	}
+	}, nil
 }

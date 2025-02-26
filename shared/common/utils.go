@@ -4,11 +4,11 @@ import (
 	"context"
 
 	kitjwt "github.com/go-kit/kit/auth/jwt"
-	"github.com/golang-jwt/jwt/v4"
+	"github.com/golang-jwt/jwt/v5"
 )
 
-func GetStandardClaimsFromContext(ctx context.Context) (*jwt.StandardClaims, error) {
-	claims, ok := ctx.Value(kitjwt.JWTClaimsContextKey).(*jwt.StandardClaims)
+func GetStandardClaimsFromContext(ctx context.Context) (*jwt.RegisteredClaims, error) {
+	claims, ok := ctx.Value(kitjwt.JWTClaimsContextKey).(*jwt.RegisteredClaims)
 	if !ok {
 		return nil, ErrParsingClaims
 	}

@@ -24,9 +24,8 @@ func InitConfig() viper.Viper {
 	viper.BindEnv(common.DBPortKey)
 	viper.BindEnv(common.DBUserKey)
 	viper.BindEnv(common.DBPassKey)
-	viper.BindEnv(common.IntrospectionEndpointKey)
-	viper.BindEnv(common.ClientIdKey)
-	viper.BindEnv(common.ClientSecretKey)
+	viper.BindEnv(common.CertsEndpointKey)
+	viper.BindEnv(common.InsecureSkipVerifyKey)
 	viper.BindEnv(PetServiceHostKey)
 
 	viper.SetDefault(common.HTTPPortKey, "8080")
@@ -35,6 +34,7 @@ func InitConfig() viper.Viper {
 	viper.SetDefault(common.DBPortKey, "27017")
 	viper.SetDefault(common.DBUserKey, "root")
 	viper.SetDefault(common.DBPassKey, "root")
+	viper.SetDefault(common.InsecureSkipVerifyKey, false)
 
 	pflag.String("http-port", "", "HTTP Port")
 	pflag.String("grpc-port", "", "GRPC Port")

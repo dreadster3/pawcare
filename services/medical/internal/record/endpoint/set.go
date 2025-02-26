@@ -1,9 +1,11 @@
 package endpoint
 
 import (
+	"github.com/MicahParks/keyfunc/v3"
 	"github.com/dreadster3/pawcare/services/medical/internal/record/service"
-	"github.com/dreadster3/pawcare/shared/oauth"
+	"github.com/dreadster3/pawcare/shared/common"
 	"github.com/go-kit/kit/endpoint"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/spf13/viper"
 )
 
@@ -13,28 +15,33 @@ type Set struct {
 	GetByIdEndpoint    endpoint.Endpoint
 }
 
-func NewSet(viper viper.Viper, recordService service.IRecordService) Set {
+func NewSet(viper viper.Viper, recordService service.IRecordService) (Set, error) {
+	kf, err := keyfunc.NewDefault([]string{viper.GetString(common.CertsEndpointKey)})
+	if err != nil {
+		return Set{}, err
+	}
+
 	var createEndpoint endpoint.Endpoint
 	{
 		createEndpoint = makeCreateEndpoint(recordService)
-		createEndpoint = oauth.NewConfiguredIntrospectionMiddleware(viper)(createEndpoint)
+		createEndpoint = common.NewParser(kf.Keyfunc, jwt.SigningMethodRS256, common.RegisteredClaimsFactory)(createEndpoint)
 	}
 
 	var getByPetIdEndpoint endpoint.Endpoint
 	{
 		getByPetIdEndpoint = makeGetByPetIdEndpoint(recordService)
-		getByPetIdEndpoint = oauth.NewConfiguredIntrospectionMiddleware(viper)(getByPetIdEndpoint)
+		getByPetIdEndpoint = common.NewParser(kf.Keyfunc, jwt.SigningMethodRS256, common.RegisteredClaimsFactory)(getByPetIdEndpoint)
 	}
 
 	var getByIdEndpoint endpoint.Endpoint
 	{
 		getByIdEndpoint = makeGetByIdEndpoint(recordService)
-		getByIdEndpoint = oauth.NewConfiguredIntrospectionMiddleware(viper)(getByIdEndpoint)
+		getByIdEndpoint = common.NewParser(kf.Keyfunc, jwt.SigningMethodRS256, common.RegisteredClaimsFactory)(getByIdEndpoint)
 	}
 
 	return Set{
 		CreateEndpoint:     createEndpoint,
 		GetByPetIdEndpoint: getByPetIdEndpoint,
 		GetByIdEndpoint:    getByIdEndpoint,
-	}
+	}, nil
 }

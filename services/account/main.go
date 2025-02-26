@@ -45,6 +45,8 @@ func _main() error {
 	viper := config.InitConfig()
 	ctx := context.Background()
 
+	http.DefaultTransport.(*http.Transport).TLSClientConfig.InsecureSkipVerify = viper.GetBool(common.InsecureSkipVerifyKey)
+
 	db, teardown, err := mongodb.ConnectDB(ctx, viper.GetString(common.DBConnectionStringKey), "accounts")
 	defer teardown(ctx)
 	if err != nil {
@@ -60,8 +62,15 @@ func _main() error {
 	ownerService := ownerservice.NewOwnerService(ownerRepository, log.With(logger, "service", "owner"))
 	petService := petservice.NewPetService(petRepository, ownerService, log.With(logger, "service", "pet"))
 
-	ownerEndpoints := ownerendpoint.NewSet(viper, ownerService, log.With(logger, "endpoint", "owner"))
-	petEndpoints := petendpoint.NewSet(viper, petService, log.With(logger, "endpoint", "pet"))
+	ownerEndpoints, err := ownerendpoint.NewSet(viper, ownerService, log.With(logger, "endpoint", "owner"))
+	if err != nil {
+		return err
+	}
+
+	petEndpoints, err := petendpoint.NewSet(viper, petService, log.With(logger, "endpoint", "pet"))
+	if err != nil {
+		return err
+	}
 
 	httpHandler := transport.MakeHTTPServer(ownerEndpoints, petEndpoints, log.With(logger, "transport", "http"))
 	httpHandler = accessControl(httpHandler)
