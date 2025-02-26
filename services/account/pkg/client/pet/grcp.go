@@ -3,8 +3,10 @@ package pet
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/dreadster3/pawcare/services/account/internal/pet/proto"
+	"github.com/dreadster3/pawcare/shared/proxy"
 	kitjwt "github.com/go-kit/kit/auth/jwt"
 	"github.com/go-kit/kit/endpoint"
 	kitgrpc "github.com/go-kit/kit/transport/grpc"
@@ -23,6 +25,7 @@ func newGRPCClient(conn *grpc.ClientConn) Set {
 	var getById endpoint.Endpoint
 	{
 		getById = kitgrpc.NewClient(conn, "proto.PetService", "GetById", encodeGetByIdRequest, decodeGetByIdResponse, proto.GetPetResponse{}, options...).Endpoint()
+		getById = proxy.Retry(3, 250*time.Millisecond)(getById)
 	}
 
 	return Set{

@@ -46,6 +46,8 @@ func _main() error {
 	viper := config.InitConfig()
 	ctx := context.Background()
 
+	http.DefaultTransport.(*http.Transport).TLSClientConfig.InsecureSkipVerify = viper.GetBool(common.InsecureSkipVerifyKey)
+
 	db, teardown, err := mongodb.ConnectDB(ctx, viper.GetString(common.DBConnectionStringKey), "medical")
 	defer teardown(ctx)
 	if err != nil {
