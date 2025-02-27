@@ -1,6 +1,6 @@
 # pawcare
 
-## TODOS
+## TODOS - v0
 - [x] Accounts API
 - [x] Medical API
 - [x] Docker compose deployment
