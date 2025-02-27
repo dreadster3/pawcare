@@ -25,8 +25,6 @@
           packages = with pkgs; [
             go
             gopls
-            go-swagger
-            go-swag
             protobuf
             protoc-gen-go
             protoc-gen-go-grpc
