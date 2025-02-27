@@ -23,8 +23,8 @@ func InitConfig() viper.Viper {
 	viper.BindEnv(common.CertsEndpointKey)
 	viper.BindEnv(common.InsecureSkipVerifyKey)
 
-	viper.SetDefault(common.HTTPPortKey, "8080")
-	viper.SetDefault(common.GRPCPortKey, "8081")
+	viper.SetDefault(common.HTTPPortKey, "80")
+	viper.SetDefault(common.GRPCPortKey, "81")
 	viper.SetDefault(common.DBHostKey, "localhost")
 	viper.SetDefault(common.DBPortKey, "27017")
 	viper.SetDefault(common.DBUserKey, "root")

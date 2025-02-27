@@ -1,0 +1,31 @@
+services:
+  accounts:
+    build:
+      context: .
+      dockerfile: ./services/account/Dockerfile
+    ports:
+      - 8080:80
+      - 8081:81
+    environment:
+      PAWCARE_DB_HOST: ${DB_HOST}
+      PAWCARE_DB_PORT: ${DB_PORT}
+      PAWCARE_DB_USER: ${DB_USER}
+      PAWCARE_DB_PASS: ${DB_PASS}
+      PAWCARE_CERTS_ENDPOINT: ${CERTS_ENDPOINT}
+      PAWCARE_INSECURE_SKIP_VERIFY: true
+
+  medical:
+    build:
+      context: .
+      dockerfile: ./services/medical/Dockerfile
+    ports:
+      - 8082:80
+      - 8083:81
+    environment:
+      PAWCARE_DB_HOST: ${DB_HOST}
+      PAWCARE_DB_PORT: ${DB_PORT}
+      PAWCARE_DB_USER: ${DB_USER}
+      PAWCARE_DB_PASS: ${DB_PASS}
+      PAWCARE_CERTS_ENDPOINT: ${CERTS_ENDPOINT}
+      PAWCARE_INSECURE_SKIP_VERIFY: true
+      PAWCARE_PET_SERVICE_HOST: accounts:81
