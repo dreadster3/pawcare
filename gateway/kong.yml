@@ -1,0 +1,70 @@
+_format_version: "3.0"
+_transform: true
+
+services:
+  - name: accounts
+    protocol: http
+    host: accounts
+    port: 80
+    routes:
+      - name: owners
+        strip_path: false
+        protocols:
+          - http
+          - https
+        paths:
+          - /api/v1/owners
+        methods:
+          - GET
+          - POST
+        tags:
+          - accounts
+          - owners
+      - name: pets
+        strip_path: false
+        protocols:
+          - http
+          - https
+        paths:
+          - /api/v1/pets
+        methods:
+          - GET
+          - POST
+        tags:
+          - accounts
+          - owners
+    tags:
+      - accounts
+  - name: medical
+    protocol: http
+    host: medical
+    port: 80
+    routes:
+      - name: pet_records
+        strip_path: false
+        protocols:
+          - http
+          - https
+        paths:
+          - ~/api/v1/pets/.+/records
+        methods:
+          - GET
+        tags:
+          - medical
+          - records
+          - pets
+      - name: records
+        strip_path: false
+        protocols:
+          - http
+          - https
+        paths:
+          - /api/v1/records
+        methods:
+          - GET
+          - POST
+        tags:
+          - medical
+          - records
+    tags:
+      - medical
