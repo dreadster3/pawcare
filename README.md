@@ -4,6 +4,7 @@
 - [x] Accounts API
 - [x] Medical API
 - [x] Docker compose deployment
-- [ ] API Gateway
-- [ ] Authentication service automatic deployment
-- [ ] Kubernetes Deployment
+- [x] API Gateway
+- [x] Authentication service automatic deployment
+- [ ] Use API gateway to forward requests to authentication service
+- [ ] Use API gateway to authenticate admin endpoints
