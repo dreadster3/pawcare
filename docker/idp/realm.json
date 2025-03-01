@@ -1,0 +1,25 @@
+{
+  "realm": "pawcare",
+  "displayName": "Pawcare",
+  "sslRequired": "external",
+  "enabled": true,
+  "registrationAllowed": true,
+  "resetPasswordAllowed": true,
+  "rememberMe": true,
+  "clients": [
+    {
+      "id": "frontend",
+      "name": "frontend",
+      "description": "Frontend service for pawcare",
+      "enabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "${KEYCLOAK_CLIENT_SECRET}",
+      "redirectUris": [
+        "https://oauth.pstmn.io/v1/callback"
+      ],
+      "webOrigins": [
+        "/*"
+      ]
+    }
+  ]
+}
