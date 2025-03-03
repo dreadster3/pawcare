@@ -10,18 +10,17 @@ import (
 	"syscall"
 
 	"github.com/oklog/oklog/pkg/group"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 
-	"github.com/dreadster3/pawcare/services/account/pkg/client/pet"
-	"github.com/dreadster3/pawcare/services/medical/internal/config"
-	"github.com/dreadster3/pawcare/services/medical/internal/record/endpoint"
-	"github.com/dreadster3/pawcare/services/medical/internal/record/service"
-	"github.com/dreadster3/pawcare/services/medical/internal/repository/mongo"
-	"github.com/dreadster3/pawcare/services/medical/internal/transport"
+	"github.com/dreadster3/pawcare/services/account/internal/config"
+	ownerendpoint "github.com/dreadster3/pawcare/services/account/internal/owner/endpoint"
+	ownerservice "github.com/dreadster3/pawcare/services/account/internal/owner/service"
+	petendpoint "github.com/dreadster3/pawcare/services/account/internal/pet/endpoint"
+	petservice "github.com/dreadster3/pawcare/services/account/internal/pet/service"
+	"github.com/dreadster3/pawcare/services/account/internal/repository/mongo"
+	"github.com/dreadster3/pawcare/services/account/internal/transport"
 	"github.com/dreadster3/pawcare/shared/common"
 	"github.com/dreadster3/pawcare/shared/db/mongodb"
-	kitlog "github.com/go-kit/log"
+	"github.com/go-kit/log"
 
 	"github.com/joho/godotenv"
 )
@@ -48,38 +47,39 @@ func _main() error {
 
 	http.DefaultTransport.(*http.Transport).TLSClientConfig.InsecureSkipVerify = viper.GetBool(common.InsecureSkipVerifyKey)
 
-	db, teardown, err := mongodb.ConnectDB(ctx, viper.GetString(common.DBConnectionStringKey), "medical")
+	db, teardown, err := mongodb.ConnectDB(ctx, viper.GetString(common.DBConnectionStringKey), "accounts")
 	defer teardown(ctx)
 	if err != nil {
 		return err
 	}
 
-	logger := kitlog.NewLogfmtLogger(kitlog.NewSyncWriter(os.Stderr))
-	logger = kitlog.With(logger, "ts", kitlog.DefaultTimestampUTC, "caller", kitlog.DefaultCaller)
+	logger := log.NewLogfmtLogger(log.NewSyncWriter(os.Stderr))
+	logger = log.With(logger, "ts", log.DefaultTimestampUTC, "caller", log.DefaultCaller)
 
-	conn, err := grpc.Dial(viper.GetString(config.PetServiceHostKey), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	ownerRepository := mongo.NewOwnerRepository(db, log.With(logger, "repository", "owner"))
+	petRepository := mongo.NewPetRepository(db, log.With(logger, "repository", "pet"))
+
+	ownerService := ownerservice.NewOwnerService(ownerRepository, log.With(logger, "service", "owner"))
+	petService := petservice.NewPetService(petRepository, ownerService, log.With(logger, "service", "pet"))
+
+	ownerEndpoints, err := ownerendpoint.NewSet(viper, ownerService, log.With(logger, "endpoint", "owner"))
 	if err != nil {
 		return err
 	}
 
-	petService := pet.NewPetService(conn, kitlog.With(logger, "client", "pet"))
-
-	repository := mongo.NewRecordRepository(db, kitlog.With(logger, "repository", "record"))
-
-	service := service.NewRecordService(repository, petService, kitlog.With(logger, "service", "record"))
-	endpoints, err := endpoint.NewSet(viper, service)
+	petEndpoints, err := petendpoint.NewSet(viper, petService, log.With(logger, "endpoint", "pet"))
 	if err != nil {
 		return err
 	}
 
-	httpHandler := transport.MakeHTTPServer(endpoints, kitlog.With(logger, "transport", "http"))
+	httpHandler := transport.MakeHTTPServer(ownerEndpoints, petEndpoints, log.With(logger, "transport", "http"))
 	httpHandler = accessControl(httpHandler)
 
 	var g group.Group
 
 	{
 		httpAddr := fmt.Sprintf(":%s", viper.GetString(common.HTTPPortKey))
-		logger := kitlog.With(logger, "transport", "http")
+		logger := log.With(logger, "transport", "http")
 		httpListenAddr, err := net.Listen("tcp", httpAddr)
 		if err != nil {
 			return err
@@ -96,14 +96,14 @@ func _main() error {
 
 	{
 		grpcAddr := fmt.Sprintf(":%s", viper.GetString(common.GRPCPortKey))
-		logger := kitlog.With(logger, "transport", "grpc")
+		logger := log.With(logger, "transport", "grpc")
 		grpcListenAddr, err := net.Listen("tcp", grpcAddr)
 		if err != nil {
 			return err
 		}
 
 		g.Add(func() error {
-			server := transport.NewGRPCServer(logger)
+			server := transport.NewGRPCServer(ownerEndpoints, petEndpoints, logger)
 			logger.Log("msg", "Starting server", "addr", grpcAddr)
 			return server.Serve(grpcListenAddr)
 		}, func(err error) {

@@ -8,7 +8,7 @@ RUN go mod download
 
 COPY . .
 
-WORKDIR /app/services/medical
+WORKDIR /app/services/account
 
 RUN CGO_ENABLED=0 GOOS=linux go build -o server
 
@@ -21,7 +21,7 @@ ENV HTTP_PORT=${HTTP_PORT}
 ENV GRPC_PORT=${GRPC_PORT}
 
 WORKDIR /app
-COPY --from=builder /app/services/medical/server /app
+COPY --from=builder /app/services/account/server /app
 
 EXPOSE ${HTTP_PORT}
 EXPOSE ${GRPC_PORT}

@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package proto;
+
+import "google/protobuf/empty.proto";
+
+option go_package = "github.com/dreadster3/pawcare/services/account/owner/proto";
+
+service OwnerService {
+  rpc Get(google.protobuf.Empty) returns (GetOwnerResponse) {}
+}
+
+message GetOwnerResponse {
+  string id = 1;
+  string name = 2;
+  string date_of_birth = 3;
+  string err = 4;
+}

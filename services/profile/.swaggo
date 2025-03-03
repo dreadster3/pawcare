@@ -1,2 +1,0 @@
-replace primitive.DateTime time.Time
-replace primitive.Binary string
