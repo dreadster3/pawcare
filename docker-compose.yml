@@ -2,8 +2,6 @@ services:
   keycloak:
     image: keycloak/keycloak:latest
     command: start --import-realm
-    profiles:
-      - idp
     depends_on:
       - keycloak-db
     environment:
@@ -25,8 +23,6 @@ services:
 
   keycloak-db:
     image: postgres:17
-    profiles:
-      - idp
     environment:
       POSTGRES_DB: keycloak
       POSTGRES_USER: ${KEYCLOAK_DB_USER:-keycloak}
@@ -50,8 +46,6 @@ services:
 
   kong:
     image: kong:latest
-    profiles:
-      - gateway
     environment:
       KONG_PROXY_LISTEN: "0.0.0.0:8000, 0.0.0.0:8443 ssl"
       KONG_ADMIN_GUI_LISTEN: "0.0.0.0:8001, 0.0.0.0:8444 ssl"
@@ -88,15 +82,14 @@ services:
     build:
       context: .
       dockerfile: ./services/account/Dockerfile
-    profiles:
-      - pawcare
     environment:
-      PAWCARE_DB_HOST: ${DB_HOST}
-      PAWCARE_DB_PORT: ${DB_PORT}
+      PAWCARE_DB_HOST: mongo
+      PAWCARE_DB_PORT: 27017
       PAWCARE_DB_USER: ${DB_USER}
       PAWCARE_DB_PASS: ${DB_PASS}
       PAWCARE_CERTS_ENDPOINT: http://keycloak:8080/realms/pawcare/protocol/openid-connect/certs
       PAWCARE_INSECURE_SKIP_VERIFY: true
+    restart: always
     networks:
       - default
 
@@ -104,18 +97,26 @@ services:
     build:
       context: .
       dockerfile: ./services/medical/Dockerfile
-    profiles:
-      - pawcare
     environment:
-      PAWCARE_DB_HOST: ${DB_HOST}
-      PAWCARE_DB_PORT: ${DB_PORT}
+      PAWCARE_DB_HOST: mongo
+      PAWCARE_DB_PORT: 27017
       PAWCARE_DB_USER: ${DB_USER}
       PAWCARE_DB_PASS: ${DB_PASS}
       PAWCARE_CERTS_ENDPOINT: http://keycloak:8080/realms/pawcare/protocol/openid-connect/certs
       PAWCARE_INSECURE_SKIP_VERIFY: true
       PAWCARE_PET_SERVICE_HOST: accounts:81
+    restart: always
     networks:
       - default
+
+  mongo:
+    image: mongo:latest
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${DB_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${DB_PASS}
+    volumes:
+      - mongo_data:/data/db
+    restart: always
 
 networks:
   gateway:
@@ -135,6 +136,8 @@ volumes:
   keycloak_data:
     driver: local
   kong_data:
+    driver: local
+  mongo_data:
     driver: local
 
 secrets:

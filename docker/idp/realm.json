@@ -9,7 +9,7 @@
   "clients": [
     {
       "id": "frontend",
-      "name": "frontend",
+      "name": "${KEYCLOAK_CLIENT_ID:-frontend}",
       "description": "Frontend service for pawcare",
       "enabled": true,
       "clientAuthenticatorType": "client-secret",
