@@ -28,3 +28,4 @@ go.work.sum
 .direnv
 
 certificate.*
+docker/gateway/certs

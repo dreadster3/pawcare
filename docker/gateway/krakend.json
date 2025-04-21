@@ -1,0 +1,52 @@
+{
+  "version": 3,
+  "timeout": "3s",
+  "endpoints": [
+    {
+      "endpoint": "/owners",
+      "method": "GET",
+      "output_encoding": "json",
+      "backend": [
+        {
+          "host": ["http://accounts"],
+          "url_pattern": "/api/v1/owners",
+          "encoding": "json",
+          "sd": "static",
+          "method": "GET"
+        }
+      ],
+      "extra_config": {
+        "auth/validator": {
+          "alg": "RS256",
+          "jwk_url": "http://auth.pawcare.dev:8080/realms/pawcare/protocol/openid-connect/certs",
+          "disable_jwk_security": true,
+          "cache": true
+        }
+      },
+      "input_headers": ["Authorization"]
+    },
+    {
+      "endpoint": "/owners",
+      "method": "POST",
+      "output_encoding": "json",
+      "backend": [
+        {
+          "host": ["http://accounts"],
+          "url_pattern": "/api/v1/owners",
+          "encoding": "json",
+          "sd": "static",
+          "method": "POST"
+        }
+      ],
+      "extra_config": {
+        "auth/validator": {
+          "alg": "RS256",
+          "jwk_url": "http://auth.pawcare.dev:8080/realms/pawcare/protocol/openid-connect/certs",
+          "disable_jwk_security": true,
+          "cache": true
+        }
+      },
+      "input_headers": ["Authorization"]
+    }
+  ]
+}

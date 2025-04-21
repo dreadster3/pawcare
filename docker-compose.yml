@@ -2,11 +2,14 @@ services:
   keycloak:
     image: keycloak/keycloak:latest
     command: start --import-realm
+    ports:
+      - "8080:8080"
     depends_on:
       - keycloak-db
     environment:
       KC_HOSTNAME: ${KEYCLOAK_HOSTNAME}
-      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: true
+      # KC_HOSTNAME_STRICT: false
+      # KC_HOSTNAME_BACKCHANNEL_DYNAMIC: true
       KC_DB: postgres
       KC_DB_URL: jdbc:postgresql://keycloak-db/keycloak
       KC_DB_USER: ${KEYCLOAK_DB_USER}
@@ -15,11 +18,12 @@ services:
       KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_USERNAME}
       KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_PASSWORD}
       KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET}
-    networks:
-      - default
     volumes:
       - ./docker/idp/realm.json:/opt/keycloak/data/import/realm.json
     restart: always
+    networks:
+      - idp
+      - exposed
 
   keycloak-db:
     image: postgres:17
@@ -43,39 +47,17 @@ services:
     volumes:
       - keycloak_data:/var/lib/postgresql/data
     restart: always
-
-  kong:
-    image: kong:latest
-    environment:
-      KONG_PROXY_LISTEN: "0.0.0.0:8000, 0.0.0.0:8443 ssl"
-      KONG_ADMIN_GUI_LISTEN: "0.0.0.0:8001, 0.0.0.0:8444 ssl"
-      KONG_PROXY_ACCESS_LOG: /dev/stdout
-      KONG_PROXY_ERROR_LOG: /dev/stderr
-      KONG_PREFIX: /var/run/kong
-      KONG_DATABASE: off
-      KONG_DECLARATIVE_CONFIG: /opt/kong/kong.yml
-      KONG_SSL_CERT: /run/secrets/kong_cert
-      KONG_SSL_CERT_KEY: /run/secrets/kong_key
-    ports:
-      - 80:8000
-      - 443:8443
-      # - 8002:8002 Admin GUI
-      # - 8444:8444 Admin GUI TLS
-    healthcheck:
-      test: ["CMD", "kong", "health"]
-      interval: 10s
-      timeout: 10s
-      retries: 10
-    restart: on-failure:5
-    volumes:
-      - kong_prefix:/var/run/kong
-      - kong_tmp:/tmp
-      - ./docker/gateway/kong.yml:/opt/kong/kong.yml
-    secrets:
-      - kong_cert
-      - kong_key
     networks:
-      - default
+      - idp
+
+  krakend:
+    image: krakend:latest
+    ports:
+      - "80:8080"
+    volumes:
+      - ./docker/gateway/krakend.json:/etc/krakend/krakend.json
+    networks:
+      - exposed
       - gateway
 
   accounts:
@@ -87,11 +69,12 @@ services:
       PAWCARE_DB_PORT: 27017
       PAWCARE_DB_USER: ${DB_USER}
       PAWCARE_DB_PASS: ${DB_PASS}
-      PAWCARE_CERTS_ENDPOINT: http://keycloak:8080/realms/pawcare/protocol/openid-connect/certs
+      PAWCARE_CERTS_ENDPOINT: ${KEYCLOAK_HOSTNAME}/realms/pawcare/protocol/openid-connect/certs
       PAWCARE_INSECURE_SKIP_VERIFY: true
     restart: always
     networks:
-      - default
+      - pawcare
+      - gateway
 
   medical:
     build:
@@ -102,12 +85,13 @@ services:
       PAWCARE_DB_PORT: 27017
       PAWCARE_DB_USER: ${DB_USER}
       PAWCARE_DB_PASS: ${DB_PASS}
-      PAWCARE_CERTS_ENDPOINT: http://keycloak:8080/realms/pawcare/protocol/openid-connect/certs
+      PAWCARE_CERTS_ENDPOINT: ${KEYCLOAK_HOSTNAME}/realms/pawcare/protocol/openid-connect/certs
       PAWCARE_INSECURE_SKIP_VERIFY: true
       PAWCARE_PET_SERVICE_HOST: accounts:81
     restart: always
     networks:
-      - default
+      - pawcare
+      - gateway
 
   mongo:
     image: mongo:latest
@@ -117,11 +101,17 @@ services:
     volumes:
       - mongo_data:/data/db
     restart: always
+    networks:
+      - pawcare
 
 networks:
   gateway:
     driver: bridge
-  default:
+  pawcare:
+    driver: bridge
+  idp:
+    driver: bridge
+  exposed:
     driver: bridge
 
 volumes:
@@ -139,9 +129,3 @@ volumes:
     driver: local
   mongo_data:
     driver: local
-
-secrets:
-  kong_cert:
-    file: ./docker/gateway/certificate.cert
-  kong_key:
-    file: ./docker/gateway/certificate.key
