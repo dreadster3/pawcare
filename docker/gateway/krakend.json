@@ -1,11 +1,11 @@
 {
   "version": 3,
   "timeout": "3s",
+  "output_encoding": "no-op",
   "endpoints": [
     {
       "endpoint": "/owners",
       "method": "GET",
-      "output_encoding": "json",
       "backend": [
         {
           "host": ["http://accounts"],
@@ -28,7 +28,6 @@
     {
       "endpoint": "/owners",
       "method": "POST",
-      "output_encoding": "json",
       "backend": [
         {
           "host": ["http://accounts"],

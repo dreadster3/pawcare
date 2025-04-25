@@ -1,4 +1,5 @@
 services:
+  # IDP
   keycloak:
     image: keycloak/keycloak:latest
     command: start --import-realm
@@ -50,6 +51,7 @@ services:
     networks:
       - idp
 
+  # Gateway
   krakend:
     image: krakend:latest
     ports:
@@ -59,6 +61,36 @@ services:
     networks:
       - exposed
       - gateway
+
+  kafka:
+    image: apache/kafka:latest
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+    expose:
+      - 9092
+    restart: always
+    networks:
+      - pawcare
+      - queue
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    ports:
+      - "8081:8080"
+    environment:
+      DYNAMIC_CONFIG_ENABLED: true
+      KAFKA_CLUSTERS_0_NAME: pawcare
+      KAFKA_CLUSTERS_0_BOOTSTRAP_SERVERS: "kafka:9092"
+      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+    restart: always
+    networks:
+      - queue
 
   accounts:
     build:
@@ -110,6 +142,8 @@ networks:
   pawcare:
     driver: bridge
   idp:
+    driver: bridge
+  queue:
     driver: bridge
   exposed:
     driver: bridge
