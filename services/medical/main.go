@@ -15,8 +15,10 @@ import (
 
 	"github.com/dreadster3/pawcare/services/account/pkg/client/pet"
 	"github.com/dreadster3/pawcare/services/medical/internal/config"
-	"github.com/dreadster3/pawcare/services/medical/internal/record/endpoint"
-	"github.com/dreadster3/pawcare/services/medical/internal/record/service"
+	"github.com/dreadster3/pawcare/services/medical/internal/pet/endpoint"
+	"github.com/dreadster3/pawcare/services/medical/internal/pet/service"
+	recordendpoint "github.com/dreadster3/pawcare/services/medical/internal/record/endpoint"
+	recordservice "github.com/dreadster3/pawcare/services/medical/internal/record/service"
 	"github.com/dreadster3/pawcare/services/medical/internal/repository/mongo"
 	"github.com/dreadster3/pawcare/services/medical/internal/transport"
 	"github.com/dreadster3/pawcare/shared/common"
@@ -57,6 +59,17 @@ func _main() error {
 	logger := kitlog.NewLogfmtLogger(kitlog.NewSyncWriter(os.Stderr))
 	logger = kitlog.With(logger, "ts", kitlog.DefaultTimestampUTC, "caller", kitlog.DefaultCaller)
 
+	service := service.NewPetService(kitlog.With(logger, "service", "pet"))
+	endpoints, err := endpoint.NewSet(viper, service)
+	if err != nil {
+		return err
+	}
+
+	router, err := transport.NewRouter(viper, endpoints, kitlog.With(logger, "transport", "kafka"))
+	if err != nil {
+		return err
+	}
+
 	conn, err := grpc.Dial(viper.GetString(config.PetServiceHostKey), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return err
@@ -66,13 +79,13 @@ func _main() error {
 
 	repository := mongo.NewRecordRepository(db, kitlog.With(logger, "repository", "record"))
 
-	service := service.NewRecordService(repository, petService, kitlog.With(logger, "service", "record"))
-	endpoints, err := endpoint.NewSet(viper, service)
+	recordService := recordservice.NewRecordService(repository, petService, kitlog.With(logger, "service", "record"))
+	recordEndpoints, err := recordendpoint.NewSet(viper, recordService)
 	if err != nil {
 		return err
 	}
 
-	httpHandler := transport.MakeHTTPServer(endpoints, kitlog.With(logger, "transport", "http"))
+	httpHandler := transport.MakeHTTPServer(recordEndpoints, kitlog.With(logger, "transport", "http"))
 	httpHandler = accessControl(httpHandler)
 
 	var g group.Group
@@ -111,6 +124,14 @@ func _main() error {
 			grpcListenAddr.Close()
 		})
 	}
+
+	g.Add(func() error {
+		logger.Log("msg", "Starting message router")
+		return router.Run(ctx)
+	}, func(err error) {
+		logger.Log("msg", "Closing message router", "reason", err)
+		router.Close()
+	})
 
 	g.Add(func() error {
 		c := make(chan os.Signal, 1)

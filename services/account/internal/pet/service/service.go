@@ -4,6 +4,7 @@ import (
 	ownerservice "github.com/dreadster3/pawcare/services/account/internal/owner/service"
 	petdomain "github.com/dreadster3/pawcare/services/account/internal/pet/domain"
 	"github.com/dreadster3/pawcare/shared/common"
+	"github.com/dreadster3/pawcare/shared/events"
 	"github.com/go-kit/log"
 	"golang.org/x/net/context"
 )
@@ -15,13 +16,14 @@ type IPetService interface {
 }
 
 type petService struct {
-	petRepository petdomain.IPetRepository
-	ownerService  ownerservice.IOwnerService
+	petRepository   petdomain.IPetRepository
+	ownerService    ownerservice.IOwnerService
+	eventDispatcher events.IEventDispatcher
 }
 
-func NewPetService(petRepository petdomain.IPetRepository, ownerService ownerservice.IOwnerService, logger log.Logger) IPetService {
+func NewPetService(petRepository petdomain.IPetRepository, ownerService ownerservice.IOwnerService, eventDispatcher events.IEventDispatcher, logger log.Logger) IPetService {
 	var svc IPetService
-	svc = &petService{petRepository: petRepository, ownerService: ownerService}
+	svc = &petService{petRepository: petRepository, ownerService: ownerService, eventDispatcher: eventDispatcher}
 	svc = newLoggingMiddleware(logger)(svc)
 
 	return svc
@@ -60,10 +62,14 @@ func (svc *petService) Create(ctx context.Context, petProfile petdomain.PetProfi
 		return nil, err
 	}
 
-	petpetdomain := petdomain.NewPet(owner.Id, petProfile)
-	if err := svc.petRepository.Create(ctx, petpetdomain); err != nil {
+	pet := petdomain.NewPet(owner.Id, petProfile)
+	if err := svc.petRepository.Create(ctx, pet); err != nil {
 		return nil, err
 	}
 
-	return petpetdomain, nil
+	if err := svc.eventDispatcher.Dispatch(ctx, pet.Events()); err != nil {
+		return nil, err
+	}
+
+	return pet, nil
 }

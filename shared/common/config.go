@@ -21,6 +21,7 @@ var (
 	IntrospectionEndpointKey = "INTROSPECTION_ENDPOINT"
 	ClientIdKey              = "CLIENT_ID"
 	ClientSecretKey          = "CLIENT_SECRET"
+	KafkaBrokersKey          = "KAFKA_BROKERS"
 )
 
 func SetConnectionStringConfig(viper *viper.Viper) {

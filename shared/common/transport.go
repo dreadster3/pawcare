@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/dreadster3/pawcare/shared/utils"
 	kitjwt "github.com/go-kit/kit/auth/jwt"
 	"github.com/go-kit/kit/endpoint"
@@ -40,6 +41,22 @@ func DecodeJSONRequest[T any](_ context.Context, r *http.Request) (interface{}, 
 		return nil, err
 	}
 	return request, nil
+}
+
+func KafkaDecodeJSONMessage[T any](_ context.Context, msg *message.Message) (interface{}, error) {
+	var request T
+	if err := json.Unmarshal(msg.Payload, &request); err != nil {
+		return nil, err
+	}
+	return request, nil
+}
+
+func KafkaEncodeResponse(ctx context.Context, response interface{}) error {
+	if e, ok := response.(endpoint.Failer); ok && e.Failed() != nil {
+		// TODO: Change this
+		return nil
+	}
+	return nil
 }
 
 func GRPCDecodeNoBody(_ context.Context, req interface{}) (interface{}, error) {

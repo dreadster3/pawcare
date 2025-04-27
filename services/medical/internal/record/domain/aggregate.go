@@ -2,8 +2,10 @@ package domain
 
 import "fmt"
 
-type PetId string
-type RecordId string
+type (
+	PetId    string
+	RecordId string
+)
 
 type Record struct {
 	Id         RecordId

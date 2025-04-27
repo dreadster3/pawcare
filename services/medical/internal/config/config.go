@@ -26,6 +26,7 @@ func InitConfig() viper.Viper {
 	viper.BindEnv(common.DBPassKey)
 	viper.BindEnv(common.CertsEndpointKey)
 	viper.BindEnv(common.InsecureSkipVerifyKey)
+	viper.BindEnv(common.KafkaBrokersKey)
 	viper.BindEnv(PetServiceHostKey)
 
 	viper.SetDefault(common.HTTPPortKey, "80")
@@ -35,6 +36,7 @@ func InitConfig() viper.Viper {
 	viper.SetDefault(common.DBUserKey, "root")
 	viper.SetDefault(common.DBPassKey, "root")
 	viper.SetDefault(common.InsecureSkipVerifyKey, false)
+	viper.SetDefault(common.KafkaBrokersKey, "kafka:9092")
 
 	pflag.String("http-port", "", "HTTP Port")
 	pflag.String("grpc-port", "", "GRPC Port")

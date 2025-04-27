@@ -4,15 +4,13 @@
   "output_encoding": "no-op",
   "endpoints": [
     {
-      "endpoint": "/owners",
+      "endpoint": "/api/v1/profiles/owners",
       "method": "GET",
       "backend": [
         {
           "host": ["http://accounts"],
           "url_pattern": "/api/v1/owners",
-          "encoding": "json",
-          "sd": "static",
-          "method": "GET"
+          "encoding": "json"
         }
       ],
       "extra_config": {
@@ -26,15 +24,53 @@
       "input_headers": ["Authorization"]
     },
     {
-      "endpoint": "/owners",
+      "endpoint": "/api/v1/profiles/owners",
       "method": "POST",
       "backend": [
         {
           "host": ["http://accounts"],
           "url_pattern": "/api/v1/owners",
-          "encoding": "json",
-          "sd": "static",
-          "method": "POST"
+          "encoding": "json"
+        }
+      ],
+      "extra_config": {
+        "auth/validator": {
+          "alg": "RS256",
+          "jwk_url": "http://auth.pawcare.dev:8080/realms/pawcare/protocol/openid-connect/certs",
+          "disable_jwk_security": true,
+          "cache": true
+        }
+      },
+      "input_headers": ["Authorization"]
+    },
+    {
+      "endpoint": "/api/v1/profiles/pets",
+      "method": "GET",
+      "backend": [
+        {
+          "host": ["http://accounts"],
+          "url_pattern": "/api/v1/pets",
+          "encoding": "json"
+        }
+      ],
+      "extra_config": {
+        "auth/validator": {
+          "alg": "RS256",
+          "jwk_url": "http://auth.pawcare.dev:8080/realms/pawcare/protocol/openid-connect/certs",
+          "disable_jwk_security": true,
+          "cache": true
+        }
+      },
+      "input_headers": ["Authorization"]
+    },
+    {
+      "endpoint": "/api/v1/profiles/pets",
+      "method": "POST",
+      "backend": [
+        {
+          "host": ["http://accounts"],
+          "url_pattern": "/api/v1/pets",
+          "encoding": "json"
         }
       ],
       "extra_config": {
