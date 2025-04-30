@@ -16,14 +16,13 @@ type IPetService interface {
 }
 
 type petService struct {
-	petRepository   petdomain.IPetRepository
-	ownerService    ownerservice.IOwnerService
-	eventDispatcher events.IEventDispatcher
+	petRepository petdomain.IPetRepository
+	ownerService  ownerservice.IOwnerService
 }
 
 func NewPetService(petRepository petdomain.IPetRepository, ownerService ownerservice.IOwnerService, eventDispatcher events.IEventDispatcher, logger *zap.Logger) IPetService {
 	var svc IPetService
-	svc = &petService{petRepository: petRepository, ownerService: ownerService, eventDispatcher: eventDispatcher}
+	svc = &petService{petRepository: petRepository, ownerService: ownerService}
 	svc = newLoggingMiddleware(logger)(svc)
 
 	return svc
@@ -64,10 +63,6 @@ func (svc *petService) Create(ctx context.Context, petProfile petdomain.PetProfi
 
 	pet := petdomain.NewPet(owner.Id, petProfile)
 	if err := svc.petRepository.Create(ctx, pet); err != nil {
-		return nil, err
-	}
-
-	if err := svc.eventDispatcher.Dispatch(ctx, pet.Events()); err != nil {
 		return nil, err
 	}
 

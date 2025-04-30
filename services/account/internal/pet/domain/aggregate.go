@@ -17,20 +17,10 @@ type Pet struct {
 }
 
 func NewPet(ownerId domain.OwnerId, profile PetProfile) (p *Pet) {
-	defer func() { p.pushEvent(NewPetCreated(p)) }()
 	return &Pet{
 		OwnerId: ownerId,
 		Profile: profile,
 	}
-}
-
-func (p *Pet) pushEvent(e events.IDomainEvent) {
-	p.events = append(p.events, e)
-}
-
-func (p Pet) Events() []events.IDomainEvent {
-	defer func() { p.events = []events.IDomainEvent{} }()
-	return p.events
 }
 
 func (p Pet) String() string {

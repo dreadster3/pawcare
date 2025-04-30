@@ -42,6 +42,7 @@ func DecodeJSONRequest[T any](_ context.Context, r *http.Request) (interface{}, 
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
 		return nil, err
 	}
+
 	return request, nil
 }
 
