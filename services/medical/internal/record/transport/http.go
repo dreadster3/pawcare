@@ -41,9 +41,8 @@ func RegisterHTTPRoutes(r *mux.Router, enpoints endpoint.Set, logger *zap.Logger
 	)
 
 	r.Methods("GET").Path("/pets/{id}/records").Handler(getByPetIdHandler)
-	router := r.PathPrefix("/records").Subrouter()
-	router.Methods("POST").Path("").Handler(createHandler)
-	router.Methods("GET").Path("/{id}").Handler(getByIdHandler)
+	r.Methods("POST").Path("/pets/{id}/records").Handler(createHandler)
+	r.Methods("GET").Path("/records/{id}").Handler(getByIdHandler)
 }
 
 func err2Status(err error) int {

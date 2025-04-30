@@ -4,7 +4,7 @@
   "output_encoding": "no-op",
   "endpoints": [
     {
-      "endpoint": "/api/v1/profiles/owners",
+      "endpoint": "/api/v1/owners",
       "method": "GET",
       "backend": [
         {
@@ -24,7 +24,7 @@
       "input_headers": ["Authorization"]
     },
     {
-      "endpoint": "/api/v1/profiles/owners",
+      "endpoint": "/api/v1/owners",
       "method": "POST",
       "backend": [
         {
@@ -44,7 +44,7 @@
       "input_headers": ["Authorization"]
     },
     {
-      "endpoint": "/api/v1/profiles/pets",
+      "endpoint": "/api/v1/pets",
       "method": "GET",
       "backend": [
         {
@@ -64,12 +64,92 @@
       "input_headers": ["Authorization"]
     },
     {
-      "endpoint": "/api/v1/profiles/pets",
+      "endpoint": "/api/v1/pets/{petId}",
+      "method": "GET",
+      "backend": [
+        {
+          "host": ["http://accounts"],
+          "url_pattern": "/api/v1/pets/{petId}",
+          "encoding": "json"
+        }
+      ],
+      "extra_config": {
+        "auth/validator": {
+          "alg": "RS256",
+          "jwk_url": "http://auth.pawcare.dev:8080/realms/pawcare/protocol/openid-connect/certs",
+          "disable_jwk_security": true,
+          "cache": true
+        }
+      },
+      "input_headers": ["Authorization"]
+    },
+    {
+      "endpoint": "/api/v1/pets",
       "method": "POST",
       "backend": [
         {
           "host": ["http://accounts"],
           "url_pattern": "/api/v1/pets",
+          "encoding": "json"
+        }
+      ],
+      "extra_config": {
+        "auth/validator": {
+          "alg": "RS256",
+          "jwk_url": "http://auth.pawcare.dev:8080/realms/pawcare/protocol/openid-connect/certs",
+          "disable_jwk_security": true,
+          "cache": true
+        }
+      },
+      "input_headers": ["Authorization"]
+    },
+    {
+      "endpoint": "/api/v1/pets/{petId}/records",
+      "method": "POST",
+      "backend": [
+        {
+          "host": ["http://medical"],
+          "url_pattern": "/api/v1/pets/{petId}/records",
+          "encoding": "json"
+        }
+      ],
+      "extra_config": {
+        "auth/validator": {
+          "alg": "RS256",
+          "jwk_url": "http://auth.pawcare.dev:8080/realms/pawcare/protocol/openid-connect/certs",
+          "disable_jwk_security": true,
+          "cache": true
+        }
+      },
+      "input_headers": ["Authorization"]
+    },
+    {
+      "endpoint": "/api/v1/pets/{petId}/records",
+      "method": "GET",
+      "backend": [
+        {
+          "host": ["http://medical"],
+          "url_pattern": "/api/v1/pets/{petId}/records",
+          "encoding": "json"
+        }
+      ],
+      "extra_config": {
+        "auth/validator": {
+          "alg": "RS256",
+          "jwk_url": "http://auth.pawcare.dev:8080/realms/pawcare/protocol/openid-connect/certs",
+          "disable_jwk_security": true,
+          "cache": true
+        }
+      },
+      "input_headers": ["Authorization"]
+    },
+    {
+      "endpoint": "/api/v1/records/{recordId}",
+      "method": "GET",
+      "backend": [
+        {
+          "host": ["http://medical"],
+          "url_pattern": "/api/v1/records/{recordId}",
           "encoding": "json"
         }
       ],
