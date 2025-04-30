@@ -5,10 +5,10 @@ import (
 
 	"github.com/dreadster3/pawcare/services/account/internal/owner/domain"
 	"github.com/dreadster3/pawcare/services/account/internal/repository"
-	"github.com/go-kit/log"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.uber.org/zap"
 )
 
 const (
@@ -50,7 +50,7 @@ type ownerRepository struct {
 	db *mongo.Database
 }
 
-func NewOwnerRepository(db *mongo.Database, logger log.Logger) domain.IOwnerRepository {
+func NewOwnerRepository(db *mongo.Database, logger *zap.Logger) domain.IOwnerRepository {
 	var repository domain.IOwnerRepository
 	repository = &ownerRepository{db}
 	repository = newOwnerLoggingMiddleware(logger)(repository)

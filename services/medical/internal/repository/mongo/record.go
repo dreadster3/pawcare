@@ -6,10 +6,10 @@ import (
 	"github.com/dreadster3/pawcare/services/medical/internal/record/domain"
 	"github.com/dreadster3/pawcare/shared/common"
 	"github.com/dreadster3/pawcare/shared/utils"
-	"github.com/go-kit/log"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.uber.org/zap"
 )
 
 const (
@@ -63,7 +63,7 @@ type recordRepository struct {
 	db *mongo.Database
 }
 
-func NewRecordRepository(db *mongo.Database, logger log.Logger) domain.IRecordRepository {
+func NewRecordRepository(db *mongo.Database, logger *zap.Logger) domain.IRecordRepository {
 	var repository domain.IRecordRepository
 	repository = &recordRepository{db}
 	repository = newLoggingMiddleware(logger)(repository)

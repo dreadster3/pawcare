@@ -10,6 +10,7 @@ import (
 	"syscall"
 
 	"github.com/oklog/oklog/pkg/group"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
@@ -23,7 +24,6 @@ import (
 	"github.com/dreadster3/pawcare/services/medical/internal/transport"
 	"github.com/dreadster3/pawcare/shared/common"
 	"github.com/dreadster3/pawcare/shared/db/mongodb"
-	kitlog "github.com/go-kit/log"
 
 	"github.com/joho/godotenv"
 )
@@ -56,16 +56,18 @@ func _main() error {
 		return err
 	}
 
-	logger := kitlog.NewLogfmtLogger(kitlog.NewSyncWriter(os.Stderr))
-	logger = kitlog.With(logger, "ts", kitlog.DefaultTimestampUTC, "caller", kitlog.DefaultCaller)
+	logger, err := zap.NewProduction()
+	if err != nil {
+		return err
+	}
 
-	service := service.NewPetService(kitlog.With(logger, "service", "pet"))
+	service := service.NewPetService(logger.With(zap.String("service", "pet")))
 	endpoints, err := endpoint.NewSet(viper, service)
 	if err != nil {
 		return err
 	}
 
-	router, err := transport.NewRouter(viper, endpoints, kitlog.With(logger, "transport", "kafka"))
+	router, err := transport.NewRouter(viper, endpoints, logger.With(zap.String("transport", "kafka")))
 	if err != nil {
 		return err
 	}
@@ -75,61 +77,61 @@ func _main() error {
 		return err
 	}
 
-	petService := pet.NewPetService(conn, kitlog.With(logger, "client", "pet"))
+	petService := pet.NewPetService(conn, logger.With(zap.String("client", "pet")))
 
-	repository := mongo.NewRecordRepository(db, kitlog.With(logger, "repository", "record"))
+	repository := mongo.NewRecordRepository(db, logger.With(zap.String("repository", "record")))
 
-	recordService := recordservice.NewRecordService(repository, petService, kitlog.With(logger, "service", "record"))
+	recordService := recordservice.NewRecordService(repository, petService, logger.With(zap.String("service", "record")))
 	recordEndpoints, err := recordendpoint.NewSet(viper, recordService)
 	if err != nil {
 		return err
 	}
 
-	httpHandler := transport.MakeHTTPServer(recordEndpoints, kitlog.With(logger, "transport", "http"))
+	httpHandler := transport.MakeHTTPServer(recordEndpoints, logger.With(zap.String("transport", "http")))
 	httpHandler = accessControl(httpHandler)
 
 	var g group.Group
 
 	{
 		httpAddr := fmt.Sprintf(":%s", viper.GetString(common.HTTPPortKey))
-		logger := kitlog.With(logger, "transport", "http")
+		logger := logger.With(zap.String("transport", "http"))
 		httpListenAddr, err := net.Listen("tcp", httpAddr)
 		if err != nil {
 			return err
 		}
 
 		g.Add(func() error {
-			logger.Log("msg", "Starting server", "addr", httpAddr)
+			logger.Info("Starting server", zap.String("addr", httpAddr))
 			return http.Serve(httpListenAddr, httpHandler)
 		}, func(err error) {
-			logger.Log("msg", "Closing server", "reason", err)
+			logger.Info("Closing server", zap.NamedError("reason", err))
 			httpListenAddr.Close()
 		})
 	}
 
 	{
 		grpcAddr := fmt.Sprintf(":%s", viper.GetString(common.GRPCPortKey))
-		logger := kitlog.With(logger, "transport", "grpc")
+		logger := logger.With(zap.String("transport", "grpc"))
 		grpcListenAddr, err := net.Listen("tcp", grpcAddr)
 		if err != nil {
 			return err
 		}
 
 		g.Add(func() error {
-			server := transport.NewGRPCServer(logger)
-			logger.Log("msg", "Starting server", "addr", grpcAddr)
+			server := transport.NewGRPCServer()
+			logger.Info("Starting server", zap.String("addr", grpcAddr))
 			return server.Serve(grpcListenAddr)
 		}, func(err error) {
-			logger.Log("msg", "Closing server", "reason", err)
+			logger.Info("Closing server", zap.NamedError("reason", err))
 			grpcListenAddr.Close()
 		})
 	}
 
 	g.Add(func() error {
-		logger.Log("msg", "Starting message router")
+		logger.Info("Starting message router")
 		return router.Run(ctx)
 	}, func(err error) {
-		logger.Log("msg", "Closing message router", "reason", err)
+		logger.Info("Closing message router", zap.NamedError("reason", err))
 		router.Close()
 	})
 
@@ -138,7 +140,7 @@ func _main() error {
 		signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
 		return fmt.Errorf("%s", <-c)
 	}, func(err error) {
-		logger.Log("msg", "Shutdown signal received", "signal", err)
+		logger.Info("Shutdown signal received", zap.NamedError("signal", err))
 	})
 
 	return g.Run()

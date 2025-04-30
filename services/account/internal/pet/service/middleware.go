@@ -3,45 +3,61 @@ package service
 import (
 	"github.com/dreadster3/pawcare/services/account/internal/pet/domain"
 	"github.com/dreadster3/pawcare/shared/utils"
-	"github.com/go-kit/log"
+	"go.uber.org/zap"
 	"golang.org/x/net/context"
 )
 
 type middleware func(IPetService) IPetService
 
 type loggingMiddleware struct {
-	logger log.Logger
+	logger *zap.Logger
 	next   IPetService
 }
 
-func newLoggingMiddleware(logger log.Logger) middleware {
+func newLoggingMiddleware(logger *zap.Logger) middleware {
 	return func(next IPetService) IPetService {
 		return &loggingMiddleware{logger, next}
 	}
 }
 
-func (mw *loggingMiddleware) Logger(ctx context.Context) log.Logger {
+func (mw *loggingMiddleware) Logger(ctx context.Context) *zap.Logger {
 	requestId := ctx.Value(utils.RequestIdContextKey).(string)
-	return log.With(mw.logger, "request_id", requestId)
+	return mw.logger.With(zap.String("request_id", requestId))
 }
 
 func (mw *loggingMiddleware) GetById(ctx context.Context, id domain.PetId) (pet *domain.Pet, err error) {
 	defer func() {
-		mw.Logger(ctx).Log("method", "GetById", "id", id, "pet", pet, "err", err)
+		mw.Logger(ctx).
+			Info("GetById",
+				zap.String("method", "GetById"),
+				zap.String("id", string(id)),
+				zap.Stringer("pet", pet),
+				zap.Error(err),
+			)
 	}()
 	return mw.next.GetById(ctx, id)
 }
 
 func (mw *loggingMiddleware) GetAll(ctx context.Context) (pets []*domain.Pet, err error) {
 	defer func() {
-		mw.Logger(ctx).Log("method", "GetAll", "pets", len(pets), "err", err)
+		mw.Logger(ctx).
+			Info("GetAll",
+				zap.String("method", "GetAll"),
+				zap.Int("#pets", len(pets)),
+				zap.Error(err),
+			)
 	}()
 	return mw.next.GetAll(ctx)
 }
 
 func (mw *loggingMiddleware) Create(ctx context.Context, petProfile domain.PetProfile) (pet *domain.Pet, err error) {
 	defer func() {
-		mw.Logger(ctx).Log("method", "Create", "pet", pet, "err", err)
+		mw.Logger(ctx).
+			Info("Create",
+				zap.String("method", "Create"),
+				zap.Stringer("pet", pet),
+				zap.Error(err),
+			)
 	}()
 
 	return mw.next.Create(ctx, petProfile)

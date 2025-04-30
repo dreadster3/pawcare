@@ -7,12 +7,11 @@ import (
 	ownertransport "github.com/dreadster3/pawcare/services/account/internal/owner/transport"
 	petendpoint "github.com/dreadster3/pawcare/services/account/internal/pet/endpoint"
 	pettransport "github.com/dreadster3/pawcare/services/account/internal/pet/transport"
-	"github.com/go-kit/log"
 	"github.com/gorilla/mux"
+	"go.uber.org/zap"
 )
 
-func MakeHTTPServer(ownerEndpoints ownerendpoint.Set, petEndpoints petendpoint.Set, logger log.Logger) http.Handler {
-
+func MakeHTTPServer(ownerEndpoints ownerendpoint.Set, petEndpoints petendpoint.Set, logger *zap.Logger) http.Handler {
 	router := mux.NewRouter()
 	apiGroup := router.PathPrefix("/api/v1").Subrouter()
 

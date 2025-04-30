@@ -7,11 +7,11 @@ import (
 	petendpoint "github.com/dreadster3/pawcare/services/account/internal/pet/endpoint"
 	petproto "github.com/dreadster3/pawcare/services/account/internal/pet/proto"
 	pettransport "github.com/dreadster3/pawcare/services/account/internal/pet/transport"
-	"github.com/go-kit/log"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 )
 
-func NewGRPCServer(ownerEndpoints ownerendpoint.Set, petEndpoints petendpoint.Set, logger log.Logger) *grpc.Server {
+func NewGRPCServer(ownerEndpoints ownerendpoint.Set, petEndpoints petendpoint.Set, logger *zap.Logger) *grpc.Server {
 	server := grpc.NewServer()
 
 	ownerServer := ownertransport.NewGRPCServer(ownerEndpoints, logger)

@@ -6,30 +6,35 @@ import (
 	ownerdomain "github.com/dreadster3/pawcare/services/account/internal/owner/domain"
 	"github.com/dreadster3/pawcare/services/account/internal/pet/domain"
 	"github.com/dreadster3/pawcare/shared/utils"
-	"github.com/go-kit/log"
+	"go.uber.org/zap"
 )
 
 type petMiddleware func(domain.IPetRepository) domain.IPetRepository
 
 type petLoggingMiddleware struct {
-	logger log.Logger
+	logger *zap.Logger
 	next   domain.IPetRepository
 }
 
-func newPetLoggingMiddleware(logger log.Logger) petMiddleware {
+func newPetLoggingMiddleware(logger *zap.Logger) petMiddleware {
 	return func(next domain.IPetRepository) domain.IPetRepository {
 		return &petLoggingMiddleware{logger, next}
 	}
 }
 
-func (mw *petLoggingMiddleware) Logger(ctx context.Context) log.Logger {
+func (mw *petLoggingMiddleware) Logger(ctx context.Context) *zap.Logger {
 	requestId := ctx.Value(utils.RequestIdContextKey).(string)
-	return log.With(mw.logger, "request_id", requestId)
+	return mw.logger.With(zap.String("request_id", requestId))
 }
 
 func (mw *petLoggingMiddleware) Create(ctx context.Context, pet *domain.Pet) (err error) {
 	defer func() {
-		mw.Logger(ctx).Log("method", "Create", "pet", pet, "err", err)
+		mw.Logger(ctx).
+			Info("Create",
+				zap.String("method", "Create"),
+				zap.Stringer("pet", pet),
+				zap.Error(err),
+			)
 	}()
 
 	return mw.next.Create(ctx, pet)
@@ -37,24 +42,41 @@ func (mw *petLoggingMiddleware) Create(ctx context.Context, pet *domain.Pet) (er
 
 func (mw *petLoggingMiddleware) FindById(ctx context.Context, id domain.PetId) (pet *domain.Pet, err error) {
 	defer func() {
-		mw.Logger(ctx).Log("method", "FindById", "id", id, "pet", pet, "err", err)
+		mw.Logger(ctx).
+			Info("FindById",
+				zap.String("method", "FindById"),
+				zap.String("id", string(id)),
+				zap.Stringer("pet", pet),
+				zap.Error(err),
+			)
 	}()
 
 	return mw.next.FindById(ctx, id)
 }
 
-func (mw *petLoggingMiddleware) Update(ctx context.Context, pet *domain.Pet) (err error) {
-	defer func() {
-		mw.Logger(ctx).Log("method", "Update", "pet", pet, "err", err)
-	}()
-
-	return mw.next.Update(ctx, pet)
-}
-
 func (mw *petLoggingMiddleware) FindByOwnerId(ctx context.Context, ownerId ownerdomain.OwnerId) (pets []*domain.Pet, err error) {
 	defer func() {
-		mw.Logger(ctx).Log("method", "FindByOwnerId", "ownerId", ownerId, "pets", pets, "err", err)
+		mw.Logger(ctx).
+			Info("FindByOwnerId",
+				zap.String("method", "FindByOwnerId"),
+				zap.String("ownerId", string(ownerId)),
+				zap.Int("#pets", len(pets)),
+				zap.Error(err),
+			)
 	}()
 
 	return mw.next.FindByOwnerId(ctx, ownerId)
+}
+
+func (mw *petLoggingMiddleware) Update(ctx context.Context, pet *domain.Pet) (err error) {
+	defer func() {
+		mw.Logger(ctx).
+			Info("Update",
+				zap.String("method", "Update"),
+				zap.Stringer("pet", pet),
+				zap.Error(err),
+			)
+	}()
+
+	return mw.next.Update(ctx, pet)
 }

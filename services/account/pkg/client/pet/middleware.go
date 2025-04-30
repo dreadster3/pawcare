@@ -3,17 +3,17 @@ package pet
 import (
 	"context"
 
-	"github.com/go-kit/log"
+	"go.uber.org/zap"
 )
 
 type middleware func(IPetService) IPetService
 
 type loggingMiddleware struct {
-	logger log.Logger
+	logger *zap.Logger
 	next   IPetService
 }
 
-func newLoggingMiddleware(logger log.Logger) middleware {
+func newLoggingMiddleware(logger *zap.Logger) middleware {
 	return func(next IPetService) IPetService {
 		return &loggingMiddleware{logger, next}
 	}
@@ -21,7 +21,13 @@ func newLoggingMiddleware(logger log.Logger) middleware {
 
 func (mw *loggingMiddleware) GetById(ctx context.Context, id PetId) (pet Pet, err error) {
 	defer func() {
-		mw.logger.Log("method", "GetById", "id", id, "pet", pet, "err", err)
+		mw.logger.
+			Info("GetById",
+				zap.String("method", "GetById"),
+				zap.String("id", string(id)),
+				zap.Stringer("pet", pet),
+				zap.Error(err),
+			)
 	}()
 
 	return mw.next.GetById(ctx, id)

@@ -5,7 +5,7 @@ import (
 
 	"github.com/dreadster3/pawcare/services/account/pkg/client/pet"
 	"github.com/dreadster3/pawcare/services/medical/internal/record/domain"
-	"github.com/go-kit/log"
+	"go.uber.org/zap"
 )
 
 type IRecordService interface {
@@ -19,7 +19,7 @@ type recordService struct {
 	petService       pet.IPetService
 }
 
-func NewRecordService(recordRepository domain.IRecordRepository, petService pet.IPetService, logger log.Logger) IRecordService {
+func NewRecordService(recordRepository domain.IRecordRepository, petService pet.IPetService, logger *zap.Logger) IRecordService {
 	var svc IRecordService
 	svc = &recordService{recordRepository: recordRepository, petService: petService}
 	svc = newLoggingMiddleware(logger)(svc)

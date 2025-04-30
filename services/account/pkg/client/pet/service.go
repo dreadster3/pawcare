@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	"github.com/go-kit/kit/endpoint"
-	"github.com/go-kit/log"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 )
 
@@ -13,7 +13,7 @@ type IPetService interface {
 	GetById(ctx context.Context, id PetId) (Pet, error)
 }
 
-func NewPetService(conn *grpc.ClientConn, logger log.Logger) IPetService {
+func NewPetService(conn *grpc.ClientConn, logger *zap.Logger) IPetService {
 	client := newGRPCClient(conn)
 
 	var svc IPetService

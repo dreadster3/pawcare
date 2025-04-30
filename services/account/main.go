@@ -10,6 +10,7 @@ import (
 	"syscall"
 
 	"github.com/oklog/oklog/pkg/group"
+	"go.uber.org/zap"
 
 	"github.com/dreadster3/pawcare/services/account/internal/config"
 	ownerendpoint "github.com/dreadster3/pawcare/services/account/internal/owner/endpoint"
@@ -21,7 +22,6 @@ import (
 	"github.com/dreadster3/pawcare/shared/common"
 	"github.com/dreadster3/pawcare/shared/db/mongodb"
 	"github.com/dreadster3/pawcare/shared/events"
-	"github.com/go-kit/log"
 
 	"github.com/joho/godotenv"
 )
@@ -48,59 +48,62 @@ func _main() error {
 
 	http.DefaultTransport.(*http.Transport).TLSClientConfig.InsecureSkipVerify = viper.GetBool(common.InsecureSkipVerifyKey)
 
+	logger, err := zap.NewProduction()
+	if err != nil {
+		return err
+	}
+	defer logger.Sync()
+
 	db, teardown, err := mongodb.ConnectDB(ctx, viper.GetString(common.DBConnectionStringKey), "accounts")
 	defer teardown(ctx)
 	if err != nil {
 		return err
 	}
 
-	logger := log.NewLogfmtLogger(log.NewSyncWriter(os.Stderr))
-	logger = log.With(logger, "ts", log.DefaultTimestampUTC, "caller", log.DefaultCaller)
-
 	kafkaDispatcher := events.NewKafkaEventDispatcher(viper.GetStringSlice(common.KafkaBrokersKey), "accounts")
 	defer kafkaDispatcher.Close()
 
-	ownerRepository := mongo.NewOwnerRepository(db, log.With(logger, "repository", "owner"))
-	petRepository := mongo.NewPetRepository(db, log.With(logger, "repository", "pet"))
+	ownerRepository := mongo.NewOwnerRepository(db, logger.With(zap.String("repository", "owner")))
+	petRepository := mongo.NewPetRepository(db, logger.With(zap.String("repository", "pet")))
 
-	ownerService := ownerservice.NewOwnerService(ownerRepository, log.With(logger, "service", "owner"))
-	petService := petservice.NewPetService(petRepository, ownerService, kafkaDispatcher, log.With(logger, "service", "pet"))
+	ownerService := ownerservice.NewOwnerService(ownerRepository, logger.With(zap.String("service", "owner")))
+	petService := petservice.NewPetService(petRepository, ownerService, kafkaDispatcher, logger.With(zap.String("service", "pet")))
 
-	ownerEndpoints, err := ownerendpoint.NewSet(viper, ownerService, log.With(logger, "endpoint", "owner"))
+	ownerEndpoints, err := ownerendpoint.NewSet(viper, ownerService)
 	if err != nil {
 		return err
 	}
 
-	petEndpoints, err := petendpoint.NewSet(viper, petService, log.With(logger, "endpoint", "pet"))
+	petEndpoints, err := petendpoint.NewSet(viper, petService)
 	if err != nil {
 		return err
 	}
 
-	httpHandler := transport.MakeHTTPServer(ownerEndpoints, petEndpoints, log.With(logger, "transport", "http"))
+	httpHandler := transport.MakeHTTPServer(ownerEndpoints, petEndpoints, logger.With(zap.String("transport", "http")))
 	httpHandler = accessControl(httpHandler)
 
 	var g group.Group
 
 	{
 		httpAddr := fmt.Sprintf(":%s", viper.GetString(common.HTTPPortKey))
-		logger := log.With(logger, "transport", "http")
+		logger := logger.With(zap.String("transport", "http"))
 		httpListenAddr, err := net.Listen("tcp", httpAddr)
 		if err != nil {
 			return err
 		}
 
 		g.Add(func() error {
-			logger.Log("msg", "Starting server", "addr", httpAddr)
+			logger.Info("Starting server", zap.String("addr", httpAddr))
 			return http.Serve(httpListenAddr, httpHandler)
 		}, func(err error) {
-			logger.Log("msg", "Closing server", "reason", err)
+			logger.Info("Closing server", zap.NamedError("reason", err))
 			httpListenAddr.Close()
 		})
 	}
 
 	{
 		grpcAddr := fmt.Sprintf(":%s", viper.GetString(common.GRPCPortKey))
-		logger := log.With(logger, "transport", "grpc")
+		logger := logger.With(zap.String("transport", "grpc"))
 		grpcListenAddr, err := net.Listen("tcp", grpcAddr)
 		if err != nil {
 			return err
@@ -108,10 +111,10 @@ func _main() error {
 
 		g.Add(func() error {
 			server := transport.NewGRPCServer(ownerEndpoints, petEndpoints, logger)
-			logger.Log("msg", "Starting server", "addr", grpcAddr)
+			logger.Info("Starting server", zap.String("addr", grpcAddr))
 			return server.Serve(grpcListenAddr)
 		}, func(err error) {
-			logger.Log("msg", "Closing server", "reason", err)
+			logger.Info("Closing server", zap.NamedError("reason", err))
 			grpcListenAddr.Close()
 		})
 	}
@@ -121,7 +124,7 @@ func _main() error {
 		signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
 		return fmt.Errorf("%s", <-c)
 	}, func(err error) {
-		logger.Log("msg", "Shutdown signal received", "signal", err)
+		logger.Info("Shutdown signal received", zap.NamedError("signal", err))
 	})
 
 	return g.Run()

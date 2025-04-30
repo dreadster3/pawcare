@@ -5,7 +5,7 @@ import (
 
 	"github.com/dreadster3/pawcare/services/account/internal/owner/domain"
 	"github.com/dreadster3/pawcare/shared/common"
-	"github.com/go-kit/log"
+	"go.uber.org/zap"
 )
 
 type IOwnerService interface {
@@ -17,7 +17,7 @@ type ownerService struct {
 	ownerRepository domain.IOwnerRepository
 }
 
-func NewOwnerService(ownerRepository domain.IOwnerRepository, logger log.Logger) IOwnerService {
+func NewOwnerService(ownerRepository domain.IOwnerRepository, logger *zap.Logger) IOwnerService {
 	var svc IOwnerService
 	svc = &ownerService{
 		ownerRepository: ownerRepository,

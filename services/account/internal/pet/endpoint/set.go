@@ -6,7 +6,6 @@ import (
 	"github.com/dreadster3/pawcare/shared/common"
 
 	"github.com/go-kit/kit/endpoint"
-	"github.com/go-kit/log"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/spf13/viper"
 )
@@ -17,7 +16,7 @@ type Set struct {
 	GetAllEndpoint  endpoint.Endpoint
 }
 
-func NewSet(viper viper.Viper, petService petservice.IPetService, logger log.Logger) (Set, error) {
+func NewSet(viper viper.Viper, petService petservice.IPetService) (Set, error) {
 	kf, err := keyfunc.NewDefault([]string{viper.GetString(common.CertsEndpointKey)})
 	if err != nil {
 		return Set{}, err

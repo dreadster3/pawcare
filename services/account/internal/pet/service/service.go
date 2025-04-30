@@ -5,7 +5,7 @@ import (
 	petdomain "github.com/dreadster3/pawcare/services/account/internal/pet/domain"
 	"github.com/dreadster3/pawcare/shared/common"
 	"github.com/dreadster3/pawcare/shared/events"
-	"github.com/go-kit/log"
+	"go.uber.org/zap"
 	"golang.org/x/net/context"
 )
 
@@ -21,7 +21,7 @@ type petService struct {
 	eventDispatcher events.IEventDispatcher
 }
 
-func NewPetService(petRepository petdomain.IPetRepository, ownerService ownerservice.IOwnerService, eventDispatcher events.IEventDispatcher, logger log.Logger) IPetService {
+func NewPetService(petRepository petdomain.IPetRepository, ownerService ownerservice.IOwnerService, eventDispatcher events.IEventDispatcher, logger *zap.Logger) IPetService {
 	var svc IPetService
 	svc = &petService{petRepository: petRepository, ownerService: ownerService, eventDispatcher: eventDispatcher}
 	svc = newLoggingMiddleware(logger)(svc)

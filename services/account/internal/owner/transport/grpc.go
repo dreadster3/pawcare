@@ -8,9 +8,8 @@ import (
 	"github.com/dreadster3/pawcare/shared/common"
 	"github.com/dreadster3/pawcare/shared/utils"
 	kitjwt "github.com/go-kit/kit/auth/jwt"
-	"github.com/go-kit/kit/transport"
 	"github.com/go-kit/kit/transport/grpc"
-	"github.com/go-kit/log"
+	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
@@ -20,9 +19,9 @@ type grpcServer struct {
 	get grpc.Handler
 }
 
-func NewGRPCServer(endpoints endpoint.Set, logger log.Logger) proto.OwnerServiceServer {
+func NewGRPCServer(endpoints endpoint.Set, logger *zap.Logger) proto.OwnerServiceServer {
 	options := []grpc.ServerOption{
-		grpc.ServerErrorHandler(transport.NewLogErrorHandler(logger)),
+		grpc.ServerErrorHandler(common.NewLogErrorHandler(logger)),
 		grpc.ServerBefore(kitjwt.GRPCToContext()),
 		grpc.ServerBefore(utils.RequestIdGRPCToContext()),
 	}

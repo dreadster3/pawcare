@@ -11,12 +11,14 @@ import (
 	"github.com/dreadster3/pawcare/shared/utils"
 	kitjwt "github.com/go-kit/kit/auth/jwt"
 	"github.com/go-kit/kit/endpoint"
+	kittransport "github.com/go-kit/kit/transport"
 	grpctransport "github.com/go-kit/kit/transport/grpc"
 	httptransport "github.com/go-kit/kit/transport/http"
-	"github.com/go-kit/log"
 	"github.com/go-playground/validator/v10"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/gorilla/mux"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/peer"
 )
@@ -109,7 +111,7 @@ func DefaultErr2Status(err error) int {
 	}
 }
 
-func HTTPLoggingServerOptions(logger log.Logger) []httptransport.ServerOption {
+func HTTPLoggingServerOptions(logger *zap.Logger) []httptransport.ServerOption {
 	return []httptransport.ServerOption{
 		httptransport.ServerBefore(func(ctx context.Context, r *http.Request) context.Context {
 			clientIp := r.RemoteAddr
@@ -119,7 +121,15 @@ func HTTPLoggingServerOptions(logger log.Logger) []httptransport.ServerOption {
 			userAgent := r.UserAgent()
 			requestId := ctx.Value(utils.RequestIdContextKey).(string)
 
-			logger.Log("request_id", requestId, "method", method, "path", path, "client_ip", clientIp, "user_agent", userAgent, "content_length", contentLength, "msg", "Incoming request")
+			logger.
+				Info("Incoming request",
+					zap.String("request_id", requestId),
+					zap.String("method", method),
+					zap.String("path", path),
+					zap.String("client_ip", clientIp),
+					zap.String("user_agent", userAgent),
+					zap.Int64("content_length", contentLength),
+				)
 
 			return ctx
 		}),
@@ -131,46 +141,63 @@ func HTTPLoggingServerOptions(logger log.Logger) []httptransport.ServerOption {
 			requestId := ctx.Value(utils.RequestIdContextKey).(string)
 			userAgent := r.UserAgent()
 
-			logger.Log("request_id", requestId, "method", method, "path", path, "client_ip", clientIp, "user_agent", userAgent, "status_code", code, "msg", "Outgoing response")
+			logger.
+				Info("Outgoing response",
+					zap.String("request_id", requestId),
+					zap.String("method", method),
+					zap.String("path", path),
+					zap.String("client_ip", clientIp),
+					zap.String("user_agent", userAgent),
+					zap.Int("status_code", code),
+				)
 		}),
 	}
 }
 
-func GRPCLoggingServerOptions(logger log.Logger) []grpctransport.ServerOption {
+func GRPCLoggingServerOptions(logger *zap.Logger) []grpctransport.ServerOption {
 	return []grpctransport.ServerOption{
 		grpctransport.ServerBefore(func(ctx context.Context, md metadata.MD) context.Context {
 			requestId := ctx.Value(utils.RequestIdContextKey).(string)
-			logs := []interface{}{"request_id", requestId}
+			logs := []zapcore.Field{zap.String("request_id", requestId)}
 			if userAgents, ok := md["user-agent"]; ok {
-				logs = append(logs, "user_agent", strings.Join(userAgents, ";"))
+				logs = append(logs, zap.String("user_agent", strings.Join(userAgents, ";")))
 			}
 
 			if p, ok := peer.FromContext(ctx); ok && p != nil {
-				logs = append(logs, "client_ip", p.Addr)
+				logs = append(logs, zap.Stringer("client_ip", p.Addr))
 			}
 
-			logs = append(logs, "msg", "Incoming request")
-
-			logger.Log(logs...)
+			logger.Info("Incoming request", logs...)
 
 			return ctx
 		}),
 		grpctransport.ServerFinalizer(func(ctx context.Context, err error) {
 			requestId := ctx.Value(utils.RequestIdContextKey).(string)
-			logs := []interface{}{"request_id", requestId}
+			fields := []zapcore.Field{zap.String("request_id", requestId)}
 
 			if md, ok := metadata.FromIncomingContext(ctx); ok {
 				if userAgents, ok := md["user-agent"]; ok {
-					logs = append(logs, "user_agent", strings.Join(userAgents, ";"))
+					fields = append(fields, zap.String("user_agent", strings.Join(userAgents, ";")))
 				}
 			}
 
 			if p, ok := peer.FromContext(ctx); ok && p != nil {
-				logs = append(logs, "client_ip", p.Addr)
+				fields = append(fields, zap.Stringer("client_ip", p.Addr))
 			}
-			logs = append(logs, "msg", "Outgoing response")
 
-			logger.Log(logs...)
+			logger.Info("Outgoing response", fields...)
 		}),
 	}
+}
+
+type logErrorHandler struct {
+	logger *zap.Logger
+}
+
+func NewLogErrorHandler(logger *zap.Logger) kittransport.ErrorHandler {
+	return &logErrorHandler{logger}
+}
+
+func (h *logErrorHandler) Handle(ctx context.Context, err error) {
+	h.logger.Error(err.Error())
 }

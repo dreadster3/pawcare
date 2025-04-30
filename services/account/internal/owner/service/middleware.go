@@ -6,31 +6,36 @@ import (
 
 	"github.com/dreadster3/pawcare/services/account/internal/owner/domain"
 	"github.com/dreadster3/pawcare/shared/utils"
-	"github.com/go-kit/log"
 	"github.com/go-playground/validator/v10"
+	"go.uber.org/zap"
 )
 
 type middleware func(IOwnerService) IOwnerService
 
 type loggingMiddleware struct {
-	logger log.Logger
+	logger *zap.Logger
 	next   IOwnerService
 }
 
-func newLoggingMiddleware(logger log.Logger) middleware {
+func newLoggingMiddleware(logger *zap.Logger) middleware {
 	return func(next IOwnerService) IOwnerService {
 		return &loggingMiddleware{logger, next}
 	}
 }
 
-func (mw *loggingMiddleware) Logger(ctx context.Context) log.Logger {
+func (mw *loggingMiddleware) Logger(ctx context.Context) *zap.Logger {
 	requestId := ctx.Value(utils.RequestIdContextKey).(string)
-	return log.With(mw.logger, "request_id", requestId)
+	return mw.logger.With(zap.String("request_id", requestId))
 }
 
 func (mw *loggingMiddleware) Get(ctx context.Context) (owner *domain.Owner, err error) {
 	defer func() {
-		mw.Logger(ctx).Log("method", "Get", "owner", owner, "err", err)
+		mw.Logger(ctx).
+			Info("Get",
+				zap.String("method", "Get"),
+				zap.Stringer("owner", owner),
+				zap.Error(err),
+			)
 	}()
 
 	return mw.next.Get(ctx)
@@ -38,7 +43,13 @@ func (mw *loggingMiddleware) Get(ctx context.Context) (owner *domain.Owner, err 
 
 func (mw *loggingMiddleware) Create(ctx context.Context, ownerProfile domain.OwnerProfile) (owner *domain.Owner, err error) {
 	defer func() {
-		mw.Logger(ctx).Log("method", "Create", "ownerProfile", ownerProfile, "owner", owner, "err", err)
+		mw.Logger(ctx).
+			Info("Create",
+				zap.String("method", "Create"),
+				zap.Stringer("ownerProfile", ownerProfile),
+				zap.Stringer("owner", owner),
+				zap.Error(err),
+			)
 	}()
 
 	return mw.next.Create(ctx, ownerProfile)

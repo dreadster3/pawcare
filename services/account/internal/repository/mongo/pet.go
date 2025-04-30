@@ -7,10 +7,10 @@ import (
 	"github.com/dreadster3/pawcare/services/account/internal/pet/domain"
 	"github.com/dreadster3/pawcare/services/account/internal/repository"
 	"github.com/dreadster3/pawcare/shared/utils"
-	"github.com/go-kit/kit/log"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.uber.org/zap"
 )
 
 const (
@@ -69,7 +69,7 @@ type petRepository struct {
 	db *mongo.Database
 }
 
-func NewPetRepository(db *mongo.Database, logger log.Logger) domain.IPetRepository {
+func NewPetRepository(db *mongo.Database, logger *zap.Logger) domain.IPetRepository {
 	var repository domain.IPetRepository
 	repository = &petRepository{db}
 	repository = newPetLoggingMiddleware(logger)(repository)

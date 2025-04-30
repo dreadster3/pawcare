@@ -8,15 +8,14 @@ import (
 	"github.com/dreadster3/pawcare/shared/common"
 	"github.com/dreadster3/pawcare/shared/utils"
 	kitjwt "github.com/go-kit/kit/auth/jwt"
-	kittransport "github.com/go-kit/kit/transport"
 	kithttp "github.com/go-kit/kit/transport/http"
-	kitlog "github.com/go-kit/log"
 	"github.com/gorilla/mux"
+	"go.uber.org/zap"
 )
 
-func RegisterHTTPRoutes(r *mux.Router, endpoints endpoint.Set, logger kitlog.Logger) {
+func RegisterHTTPRoutes(r *mux.Router, endpoints endpoint.Set, logger *zap.Logger) {
 	options := []kithttp.ServerOption{
-		kithttp.ServerErrorHandler(kittransport.NewLogErrorHandler(logger)),
+		kithttp.ServerErrorHandler(common.NewLogErrorHandler(logger)),
 		kithttp.ServerErrorEncoder(common.ErrorEncoder(err2status)),
 		kithttp.ServerBefore(kitjwt.HTTPToContext()),
 		kithttp.ServerBefore(utils.RequestIdHTTPToContext()),
