@@ -2,4 +2,4 @@ package events
 
 type Event string
 
-var PetCreatedEvent Event = "pets.create"
+var EventPetCreated Event = "pets.create"

@@ -21,7 +21,6 @@ import (
 	"github.com/dreadster3/pawcare/services/account/internal/transport"
 	"github.com/dreadster3/pawcare/shared/common"
 	"github.com/dreadster3/pawcare/shared/db/mongodb"
-	"github.com/dreadster3/pawcare/shared/events"
 
 	"github.com/joho/godotenv"
 )
@@ -60,14 +59,16 @@ func _main() error {
 		return err
 	}
 
-	kafkaDispatcher := events.NewKafkaEventDispatcher(viper.GetStringSlice(common.KafkaBrokersKey), "accounts")
-	defer kafkaDispatcher.Close()
+	eventBus, err := transport.NewEventBus(viper, logger.With(zap.String("transport", "cqrs")))
+	if err != nil {
+		return err
+	}
 
 	ownerRepository := mongo.NewOwnerRepository(db, logger.With(zap.String("repository", "owner")))
 	petRepository := mongo.NewPetRepository(db, logger.With(zap.String("repository", "pet")))
 
 	ownerService := ownerservice.NewOwnerService(ownerRepository, logger.With(zap.String("service", "owner")))
-	petService := petservice.NewPetService(petRepository, ownerService, kafkaDispatcher, logger.With(zap.String("service", "pet")))
+	petService := petservice.NewPetService(petRepository, ownerService, eventBus, logger.With(zap.String("service", "pet")))
 
 	ownerEndpoints, err := ownerendpoint.NewSet(viper, ownerService)
 	if err != nil {

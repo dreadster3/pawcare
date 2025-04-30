@@ -2,7 +2,7 @@ package transport
 
 import (
 	"context"
-	"errors"
+	"fmt"
 
 	"github.com/ThreeDotsLabs/watermill-kafka/v3/pkg/kafka"
 	"github.com/ThreeDotsLabs/watermill/message"
@@ -19,13 +19,8 @@ func RegisterKafkaRoutes(router *message.Router, subscriber *kafka.Subscriber, e
 		common.KafkaEncodeResponse,
 	)
 
-	router.AddNoPublisherHandler("accounts", "accounts", subscriber,
+	router.AddNoPublisherHandler("create_pet", fmt.Sprintf("accounts.%s", events.EventPetCreated), subscriber,
 		func(msg *message.Message) error {
-			switch msg.Metadata.Get("name") {
-			case string(events.PetCreatedEvent):
-				return petCreateHandler(context.Background(), msg)
-			default:
-				return errors.New("not implemented")
-			}
+			return petCreateHandler(context.Background(), msg)
 		})
 }

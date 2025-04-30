@@ -1,10 +1,11 @@
 package service
 
 import (
+	"github.com/ThreeDotsLabs/watermill/components/cqrs"
 	ownerservice "github.com/dreadster3/pawcare/services/account/internal/owner/service"
 	petdomain "github.com/dreadster3/pawcare/services/account/internal/pet/domain"
+	"github.com/dreadster3/pawcare/services/account/pkg/events"
 	"github.com/dreadster3/pawcare/shared/common"
-	"github.com/dreadster3/pawcare/shared/events"
 	"go.uber.org/zap"
 	"golang.org/x/net/context"
 )
@@ -18,11 +19,12 @@ type IPetService interface {
 type petService struct {
 	petRepository petdomain.IPetRepository
 	ownerService  ownerservice.IOwnerService
+	eventBus      *cqrs.EventBus
 }
 
-func NewPetService(petRepository petdomain.IPetRepository, ownerService ownerservice.IOwnerService, eventDispatcher events.IEventDispatcher, logger *zap.Logger) IPetService {
+func NewPetService(petRepository petdomain.IPetRepository, ownerService ownerservice.IOwnerService, eventBus *cqrs.EventBus, logger *zap.Logger) IPetService {
 	var svc IPetService
-	svc = &petService{petRepository: petRepository, ownerService: ownerService}
+	svc = &petService{petRepository: petRepository, ownerService: ownerService, eventBus: eventBus}
 	svc = newLoggingMiddleware(logger)(svc)
 
 	return svc
@@ -63,6 +65,19 @@ func (svc *petService) Create(ctx context.Context, petProfile petdomain.PetProfi
 
 	pet := petdomain.NewPet(owner.Id, petProfile)
 	if err := svc.petRepository.Create(ctx, pet); err != nil {
+		return nil, err
+	}
+
+	if err := svc.eventBus.Publish(ctx, events.PetCreated{
+		Id:          string(pet.Id),
+		UserId:      string(owner.UserId),
+		Name:        pet.Profile.Name,
+		Weight:      pet.Profile.Weight,
+		Species:     pet.Profile.Species,
+		DateOfBirth: pet.Profile.DateOfBirth,
+		Breed:       pet.Profile.Breed,
+		Gender:      string(pet.Profile.Gender),
+	}); err != nil {
 		return nil, err
 	}
 

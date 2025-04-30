@@ -7,18 +7,22 @@ import (
 )
 
 type PetCreated struct {
-	Id          string
-	OwnerId     string
-	Name        string
-	DateOfBirth time.Time
-	Species     string
-	Breed       string
-	Weight      float64
-	Gender      string
+	Id          string    `json:"id"`
+	UserId      string    `json:"user_id"`
+	Name        string    `json:"name"`
+	DateOfBirth time.Time `json:"date_of_birth"`
+	Species     string    `json:"species"`
+	Breed       string    `json:"breed"`
+	Weight      float64   `json:"weight"`
+	Gender      string    `json:"gender"`
 }
 
 func (p PetCreated) EventName() string {
-	return string(PetCreatedEvent)
+	return string(EventPetCreated)
+}
+
+func (p PetCreated) Key() string {
+	return p.UserId
 }
 
 var _ events.IEvent = (*PetCreated)(nil)
