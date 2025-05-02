@@ -13,7 +13,6 @@ require (
 	github.com/gorilla/mux v1.8.1
 	github.com/joho/godotenv v1.5.1
 	github.com/oklog/oklog v0.3.2
-	github.com/segmentio/kafka-go v0.4.47
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.19.0
 	go.mongodb.org/mongo-driver v1.17.1

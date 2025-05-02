@@ -32,7 +32,7 @@ func (r *record) ToModel() *domain.Record {
 	}
 }
 
-func toPetModel(r record) *domain.Record {
+func toRecordModel(r record) *domain.Record {
 	return r.ToModel()
 }
 
@@ -112,7 +112,7 @@ func (r *recordRepository) FindByPetId(ctx context.Context, petId domain.PetId) 
 		return nil, err
 	}
 
-	return utils.Map(result, toPetModel), nil
+	return utils.Map(result, toRecordModel), nil
 }
 
 func (r *recordRepository) Create(ctx context.Context, record *domain.Record) error {

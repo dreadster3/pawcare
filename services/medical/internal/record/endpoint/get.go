@@ -18,6 +18,7 @@ type GetByIdRequest struct {
 
 type GetResponse struct {
 	Id          string    `json:"id"`
+	PetId       string    `json:"pet_id"`
 	Type        string    `json:"type"`
 	Date        time.Time `json:"date"`
 	Description string    `json:"description"`
@@ -59,6 +60,7 @@ func makeGetByPetIdEndpoint(recordService service.IRecordService) endpoint.Endpo
 			Records: utils.Map(records, func(r *domain.Record) GetResponse {
 				return GetResponse{
 					Id:          string(r.Id),
+					PetId:       string(r.PetId),
 					Type:        string(r.RecordInfo.Type),
 					Date:        r.RecordInfo.Date,
 					Description: r.RecordInfo.Description,
@@ -87,6 +89,7 @@ func makeGetByIdEndpoint(recordService service.IRecordService) endpoint.Endpoint
 
 		return GetResponse{
 			Id:          string(record.Id),
+			PetId:       string(record.PetId),
 			Type:        string(record.RecordInfo.Type),
 			Description: record.RecordInfo.Description,
 			Date:        record.RecordInfo.Date,

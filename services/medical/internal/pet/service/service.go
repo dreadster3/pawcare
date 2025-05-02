@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"errors"
 
 	"github.com/dreadster3/pawcare/services/medical/internal/pet/domain"
 	"go.uber.org/zap"
@@ -10,19 +9,34 @@ import (
 
 type IPetService interface {
 	Create(ctx context.Context, id domain.PetId, userId domain.UserId) (*domain.Pet, error)
+	GetById(ctx context.Context, id domain.PetId) (*domain.Pet, error)
 }
 
-func NewPetService(logger *zap.Logger) IPetService {
-	return &petService{
-		logger: logger,
-	}
+func NewPetService(repository domain.IPetRepository, logger *zap.Logger) IPetService {
+	var svc IPetService
+	svc = &petService{repository: repository}
+	svc = newLoggingMiddleware(logger)(svc)
+
+	return svc
 }
 
 type petService struct {
-	logger *zap.Logger
+	repository domain.IPetRepository
 }
 
 func (s *petService) Create(ctx context.Context, id domain.PetId, userId domain.UserId) (*domain.Pet, error) {
-	s.logger.Info("HEREHEREHERE")
-	return nil, errors.New("not implemented")
+	pet := &domain.Pet{
+		Id:     id,
+		UserId: userId,
+	}
+
+	if err := s.repository.Create(ctx, pet); err != nil {
+		return nil, err
+	}
+
+	return pet, nil
+}
+
+func (s *petService) GetById(ctx context.Context, id domain.PetId) (*domain.Pet, error) {
+	return s.repository.FindById(ctx, id)
 }

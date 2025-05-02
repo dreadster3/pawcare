@@ -84,6 +84,10 @@ services:
     build:
       context: .
       dockerfile: ./services/account/Dockerfile
+    depends_on:
+      - mongo
+      - keycloak
+      - kafka
     environment:
       PAWCARE_DB_HOST: mongo
       PAWCARE_DB_PORT: 27017
@@ -100,6 +104,10 @@ services:
     build:
       context: .
       dockerfile: ./services/medical/Dockerfile
+    depends_on:
+      - mongo
+      - keycloak
+      - kafka
     environment:
       PAWCARE_DB_HOST: mongo
       PAWCARE_DB_PORT: 27017

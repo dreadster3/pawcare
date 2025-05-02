@@ -3,7 +3,8 @@ package service
 import (
 	"context"
 
-	"github.com/dreadster3/pawcare/services/account/pkg/client/pet"
+	petdomain "github.com/dreadster3/pawcare/services/medical/internal/pet/domain"
+	petservice "github.com/dreadster3/pawcare/services/medical/internal/pet/service"
 	"github.com/dreadster3/pawcare/services/medical/internal/record/domain"
 	"go.uber.org/zap"
 )
@@ -16,10 +17,10 @@ type IRecordService interface {
 
 type recordService struct {
 	recordRepository domain.IRecordRepository
-	petService       pet.IPetService
+	petService       petservice.IPetService
 }
 
-func NewRecordService(recordRepository domain.IRecordRepository, petService pet.IPetService, logger *zap.Logger) IRecordService {
+func NewRecordService(recordRepository domain.IRecordRepository, petService petservice.IPetService, logger *zap.Logger) IRecordService {
 	var svc IRecordService
 	svc = &recordService{recordRepository: recordRepository, petService: petService}
 	svc = newLoggingMiddleware(logger)(svc)
@@ -33,7 +34,7 @@ func (svc *recordService) GetById(ctx context.Context, id domain.RecordId) (*dom
 		return nil, err
 	}
 
-	if _, err := svc.petService.GetById(ctx, pet.PetId(record.PetId)); err != nil {
+	if _, err := svc.petService.GetById(ctx, petdomain.PetId(record.PetId)); err != nil {
 		return nil, err
 	}
 
@@ -41,7 +42,7 @@ func (svc *recordService) GetById(ctx context.Context, id domain.RecordId) (*dom
 }
 
 func (svc *recordService) GetByPetId(ctx context.Context, petId domain.PetId) ([]*domain.Record, error) {
-	if _, err := svc.petService.GetById(ctx, pet.PetId(petId)); err != nil {
+	if _, err := svc.petService.GetById(ctx, petdomain.PetId(petId)); err != nil {
 		return nil, err
 	}
 
@@ -49,7 +50,7 @@ func (svc *recordService) GetByPetId(ctx context.Context, petId domain.PetId) ([
 }
 
 func (svc *recordService) Create(ctx context.Context, petId domain.PetId, recordInfo domain.RecordInfo) (*domain.Record, error) {
-	if _, err := svc.petService.GetById(ctx, pet.PetId(petId)); err != nil {
+	if _, err := svc.petService.GetById(ctx, petdomain.PetId(petId)); err != nil {
 		return nil, err
 	}
 

@@ -38,6 +38,7 @@ func makeCreateEndpoint(recordService service.IRecordService) endpoint.Endpoint 
 
 		return GetResponse{
 			Id:          string(record.Id),
+			PetId:       string(record.PetId),
 			Type:        string(record.RecordInfo.Type),
 			Date:        record.RecordInfo.Date,
 			Description: recordInfo.Description,

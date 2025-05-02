@@ -11,10 +11,7 @@ import (
 
 	"github.com/oklog/oklog/pkg/group"
 	"go.uber.org/zap"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 
-	"github.com/dreadster3/pawcare/services/account/pkg/client/pet"
 	"github.com/dreadster3/pawcare/services/medical/internal/config"
 	"github.com/dreadster3/pawcare/services/medical/internal/pet/endpoint"
 	"github.com/dreadster3/pawcare/services/medical/internal/pet/service"
@@ -61,26 +58,19 @@ func _main() error {
 		return err
 	}
 
-	service := service.NewPetService(logger.With(zap.String("service", "pet")))
-	endpoints, err := endpoint.NewSet(viper, service)
+	petRepository := mongo.NewPetRepository(db)
+	petService := service.NewPetService(petRepository, logger.With(zap.String("service", "pet")))
+	petEndpoints, err := endpoint.NewSet(viper, petService)
 	if err != nil {
 		return err
 	}
 
-	router, err := transport.NewRouter(viper, endpoints, logger.With(zap.String("transport", "kafka")))
+	router, err := transport.NewRouter(viper, petEndpoints, logger.With(zap.String("transport", "kafka")))
 	if err != nil {
 		return err
 	}
-
-	conn, err := grpc.Dial(viper.GetString(config.PetServiceHostKey), grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		return err
-	}
-
-	petService := pet.NewPetService(conn, logger.With(zap.String("client", "pet")))
 
 	repository := mongo.NewRecordRepository(db, logger.With(zap.String("repository", "record")))
-
 	recordService := recordservice.NewRecordService(repository, petService, logger.With(zap.String("service", "record")))
 	recordEndpoints, err := recordendpoint.NewSet(viper, recordService)
 	if err != nil {
