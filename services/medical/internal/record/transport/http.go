@@ -13,7 +13,7 @@ import (
 func RegisterHTTPRoutes(r *mux.Router, enpoints endpoint.Set, logger *zap.Logger) {
 	options := []kithttp.ServerOption{
 		kithttp.ServerErrorHandler(common.NewLogErrorHandler(logger)),
-		kithttp.ServerErrorEncoder(common.ErrorEncoder(err2Status)),
+		kithttp.ServerErrorEncoder(kithttp.DefaultErrorEncoder),
 		kithttp.ServerBefore(kitjwt.HTTPToContext()),
 		kithttp.ServerBefore(utils.RequestIdHTTPToContext()),
 	}
@@ -22,32 +22,25 @@ func RegisterHTTPRoutes(r *mux.Router, enpoints endpoint.Set, logger *zap.Logger
 	createHandler := kithttp.NewServer(
 		enpoints.CreateEndpoint,
 		common.DecodeJSONRequest[endpoint.CreateRequest],
-		common.EncodeResponse(err2Status),
+		kithttp.EncodeJSONResponse,
 		options...,
 	)
 
 	getByPetIdHandler := kithttp.NewServer(
 		enpoints.GetByPetIdEndpoint,
 		common.DecodePathParameters[endpoint.GetByIdRequest],
-		common.EncodeResponse(err2Status),
+		kithttp.EncodeJSONResponse,
 		options...,
 	)
 
 	getByIdHandler := kithttp.NewServer(
 		enpoints.GetByIdEndpoint,
 		common.DecodePathParameters[endpoint.GetByIdRequest],
-		common.EncodeResponse(err2Status),
+		kithttp.EncodeJSONResponse,
 		options...,
 	)
 
 	r.Methods("GET").Path("/pets/{id}/records").Handler(getByPetIdHandler)
 	r.Methods("POST").Path("/pets/{id}/records").Handler(createHandler)
 	r.Methods("GET").Path("/records/{id}").Handler(getByIdHandler)
-}
-
-func err2Status(err error) int {
-	switch err {
-	default:
-		return common.DefaultErr2Status(err)
-	}
 }

@@ -2,10 +2,10 @@ package mongo
 
 import (
 	"context"
+	"errors"
 
 	ownerdomain "github.com/dreadster3/pawcare/services/account/internal/owner/domain"
 	"github.com/dreadster3/pawcare/services/account/internal/pet/domain"
-	"github.com/dreadster3/pawcare/services/account/internal/repository"
 	"github.com/dreadster3/pawcare/shared/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -42,7 +42,7 @@ func toPetModel(p pet) *domain.Pet {
 func fromPetModel(p domain.Pet) (*pet, error) {
 	id, err := primitive.ObjectIDFromHex(string(p.Id))
 	if err != nil {
-		if err != primitive.ErrInvalidHex {
+		if !errors.Is(err, primitive.ErrInvalidHex) {
 			return nil, err
 		}
 		id = primitive.NewObjectID()
@@ -89,7 +89,7 @@ func (r *petRepository) FindById(ctx context.Context, id domain.PetId) (*domain.
 	var result pet
 	if err := r.Collection().FindOne(ctx, bson.M{"_id": objectId}).Decode(&result); err != nil {
 		if err == mongo.ErrNoDocuments {
-			return nil, repository.ErrNotFound
+			return nil, domain.ErrPetNotFound
 		}
 		return nil, err
 	}
@@ -106,7 +106,7 @@ func (r *petRepository) FindByOwnerId(ctx context.Context, id ownerdomain.OwnerI
 	cursor, err := r.Collection().Find(ctx, bson.M{"owner_id": objectId})
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			return nil, repository.ErrNotFound
+			return nil, domain.ErrPetNotFound
 		}
 		return nil, err
 	}

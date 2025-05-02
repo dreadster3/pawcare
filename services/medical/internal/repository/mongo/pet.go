@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/dreadster3/pawcare/services/medical/internal/pet/domain"
-	"github.com/dreadster3/pawcare/shared/common"
 	"github.com/dreadster3/pawcare/shared/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -64,7 +63,7 @@ func (r *petRepository) FindById(ctx context.Context, id domain.PetId) (*domain.
 	var result pet
 	if err := r.Collection().FindOne(ctx, bson.M{"_id": objectId}).Decode(&result); err != nil {
 		if err == mongo.ErrNoDocuments {
-			return nil, common.ErrNotFound
+			return nil, domain.ErrPetNotFound
 		}
 	}
 
@@ -75,7 +74,7 @@ func (r *petRepository) FindByUserId(ctx context.Context, userId domain.UserId) 
 	cursor, err := r.Collection().Find(ctx, bson.M{"user_id": string(userId)})
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			return nil, common.ErrNotFound
+			return nil, domain.ErrPetNotFound
 		}
 
 		return nil, err

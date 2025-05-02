@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/dreadster3/pawcare/services/medical/internal/pet/domain"
 	"go.uber.org/zap"
@@ -31,7 +32,7 @@ func (s *petService) Create(ctx context.Context, id domain.PetId, userId domain.
 	}
 
 	if err := s.repository.Create(ctx, pet); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("pet service: %w", err)
 	}
 
 	return pet, nil

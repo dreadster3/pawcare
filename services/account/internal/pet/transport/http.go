@@ -13,7 +13,7 @@ import (
 func RegisterHTTPRoutes(r *mux.Router, endpoints endpoint.Set, logger *zap.Logger) {
 	options := []kithttp.ServerOption{
 		kithttp.ServerErrorHandler(common.NewLogErrorHandler(logger)),
-		kithttp.ServerErrorEncoder(common.ErrorEncoder(err2Status)),
+		kithttp.ServerErrorEncoder(kithttp.DefaultErrorEncoder),
 		kithttp.ServerBefore(kitjwt.HTTPToContext()),
 		kithttp.ServerBefore(utils.RequestIdHTTPToContext()),
 	}
@@ -24,21 +24,21 @@ func RegisterHTTPRoutes(r *mux.Router, endpoints endpoint.Set, logger *zap.Logge
 	createHandler := kithttp.NewServer(
 		endpoints.CreateEndpoint,
 		common.DecodeJSONRequest[endpoint.CreateRequest],
-		common.EncodeResponse(err2Status),
+		kithttp.EncodeJSONResponse,
 		authenticatedOpts...,
 	)
 
 	getAllHandler := kithttp.NewServer(
 		endpoints.GetAllEndpoint,
 		common.DecodeNoBodyRequest,
-		common.EncodeResponse(err2Status),
+		kithttp.EncodeJSONResponse,
 		authenticatedOpts...,
 	)
 
 	getByIdHandler := kithttp.NewServer(
 		endpoints.GetByIdEndpoint,
 		common.DecodePathParameters[endpoint.GetByIdRequest],
-		common.EncodeResponse(err2Status),
+		kithttp.EncodeJSONResponse,
 		authenticatedOpts...,
 	)
 
@@ -46,11 +46,4 @@ func RegisterHTTPRoutes(r *mux.Router, endpoints endpoint.Set, logger *zap.Logge
 	router.Methods("POST").Path("").Handler(createHandler)
 	router.Methods("GET").Path("").Handler(getAllHandler)
 	router.Methods("GET").Path("/{id}").Handler(getByIdHandler)
-}
-
-func err2Status(err error) int {
-	switch err {
-	default:
-		return common.DefaultErr2Status(err)
-	}
 }

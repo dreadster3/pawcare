@@ -1,6 +1,11 @@
 package domain
 
-import "context"
+import (
+	"context"
+	"errors"
+)
+
+var ErrRecordNotFound = errors.New("repository: record not found")
 
 type IRecordRepository interface {
 	FindById(ctx context.Context, id RecordId) (*Record, error)

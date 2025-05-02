@@ -2,9 +2,9 @@ package mongo
 
 import (
 	"context"
+	"errors"
 
 	"github.com/dreadster3/pawcare/services/medical/internal/record/domain"
-	"github.com/dreadster3/pawcare/shared/common"
 	"github.com/dreadster3/pawcare/shared/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -39,7 +39,7 @@ func toRecordModel(r record) *domain.Record {
 func fromRecordModel(r domain.Record) (*record, error) {
 	id, err := primitive.ObjectIDFromHex(string(r.Id))
 	if err != nil {
-		if err != primitive.ErrInvalidHex {
+		if !errors.Is(err, primitive.ErrInvalidHex) {
 			return nil, err
 		}
 		id = primitive.NewObjectID()
@@ -84,7 +84,7 @@ func (r *recordRepository) FindById(ctx context.Context, id domain.RecordId) (*d
 	var result record
 	if err := r.Collection().FindOne(ctx, bson.M{"_id": objectId}).Decode(&result); err != nil {
 		if err == mongo.ErrNoDocuments {
-			return nil, common.ErrNotFound
+			return nil, domain.ErrRecordNotFound
 		}
 
 		return nil, err
@@ -102,7 +102,7 @@ func (r *recordRepository) FindByPetId(ctx context.Context, petId domain.PetId) 
 	cursor, err := r.Collection().Find(ctx, bson.M{"pet_id": objectId})
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			return nil, common.ErrNotFound
+			return nil, domain.ErrRecordNotFound
 		}
 		return nil, err
 	}

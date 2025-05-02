@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/dreadster3/pawcare/services/account/internal/owner/domain"
-	"github.com/dreadster3/pawcare/services/account/internal/repository"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -71,7 +70,7 @@ func (r *ownerRepository) FindById(ctx context.Context, id domain.OwnerId) (*dom
 	var result owner
 	if err := r.Collection().FindOne(ctx, bson.M{"_id": objectId}).Decode(&result); err != nil {
 		if err == mongo.ErrNoDocuments {
-			return nil, repository.ErrNotFound
+			return nil, domain.ErrOwnerNotFound
 		}
 
 		return nil, err
@@ -84,7 +83,7 @@ func (r *ownerRepository) FindByUserId(ctx context.Context, id domain.UserId) (*
 	var result owner
 	if err := r.Collection().FindOne(ctx, bson.M{"user_id": id}).Decode(&result); err != nil {
 		if err == mongo.ErrNoDocuments {
-			return nil, repository.ErrNotFound
+			return nil, domain.ErrOwnerNotFound
 		}
 
 		return nil, err
@@ -95,7 +94,7 @@ func (r *ownerRepository) FindByUserId(ctx context.Context, id domain.UserId) (*
 
 func (r *ownerRepository) Create(ctx context.Context, owner *domain.Owner) error {
 	if _, err := r.FindByUserId(ctx, owner.UserId); err == nil {
-		return repository.ErrAlreadyCreated
+		return domain.ErrOwnerAlreadyCreated
 	}
 
 	entity, err := fromOwnerModel(*owner)

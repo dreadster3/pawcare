@@ -2,9 +2,12 @@ package domain
 
 import (
 	"context"
+	"errors"
 
 	"github.com/dreadster3/pawcare/services/account/internal/owner/domain"
 )
+
+var ErrPetNotFound = errors.New("repository: pet not found")
 
 type IPetRepository interface {
 	FindById(ctx context.Context, id PetId) (*Pet, error)

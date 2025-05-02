@@ -1,6 +1,11 @@
 package domain
 
-import "context"
+import (
+	"context"
+	"errors"
+)
+
+var ErrPetNotFound = errors.New("repository: pet not found")
 
 type IPetRepository interface {
 	FindById(ctx context.Context, id PetId) (*Pet, error)

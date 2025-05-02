@@ -3,19 +3,15 @@ package common
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"net/http"
 	"strings"
 
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/dreadster3/pawcare/shared/utils"
-	kitjwt "github.com/go-kit/kit/auth/jwt"
 	"github.com/go-kit/kit/endpoint"
 	kittransport "github.com/go-kit/kit/transport"
 	grpctransport "github.com/go-kit/kit/transport/grpc"
 	httptransport "github.com/go-kit/kit/transport/http"
-	"github.com/go-playground/validator/v10"
-	"github.com/golang-jwt/jwt/v5"
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -80,35 +76,6 @@ func ErrorEncoder(err2Status func(error) int) func(_ context.Context, err error,
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.WriteHeader(err2Status(err))
 		json.NewEncoder(w).Encode(NewErrorResponse(err))
-	}
-}
-
-func EncodeResponse(err2Status func(error) int) func(context.Context, http.ResponseWriter, interface{}) error {
-	return func(ctx context.Context, w http.ResponseWriter, response interface{}) error {
-		if e, ok := response.(endpoint.Failer); ok && e.Failed() != nil {
-			ErrorEncoder(err2Status)(ctx, e.Failed(), w)
-			return nil
-		}
-		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		return json.NewEncoder(w).Encode(response)
-	}
-}
-
-func DefaultErr2Status(err error) int {
-	var validationErr validator.ValidationErrors
-	if errors.As(err, &validationErr) {
-		return http.StatusBadRequest
-	}
-
-	switch err {
-	case kitjwt.ErrTokenExpired, kitjwt.ErrTokenContextMissing, kitjwt.ErrTokenInvalid, kitjwt.ErrTokenMalformed, kitjwt.ErrTokenNotActive, jwt.ErrSignatureInvalid:
-		return http.StatusUnauthorized
-	case ErrAlreadyCreated:
-		return http.StatusConflict
-	case ErrNotFound:
-		return http.StatusNotFound
-	default:
-		return http.StatusInternalServerError
 	}
 }
 

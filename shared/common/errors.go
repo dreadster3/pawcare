@@ -7,9 +7,6 @@ var (
 	ErrCastResponse  = errors.New("cannot cast response")
 	ErrParsingClaims = errors.New("error parsing claims")
 	ErrUnauthorized  = errors.New("unauthorized")
-
-	ErrAlreadyCreated = errors.New("resource already exists")
-	ErrNotFound       = errors.New("resource not found error")
 )
 
 type ErrorResponse struct {

@@ -2,6 +2,12 @@ package domain
 
 import (
 	"context"
+	"errors"
+)
+
+var (
+	ErrOwnerNotFound       = errors.New("repository: owner not found")
+	ErrOwnerAlreadyCreated = errors.New("repository: owner already created")
 )
 
 type IOwnerRepository interface {
