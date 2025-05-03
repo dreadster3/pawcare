@@ -1,2 +1,2 @@
-//go:generate protoc ./owner.proto --go_out=paths=source_relative:. --go-grpc_out=paths=source_relative:.
+//go:generate protoc --go_out=. --go-grpc_out=. ./owner.proto
 package proto
