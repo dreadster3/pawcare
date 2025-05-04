@@ -8,6 +8,7 @@ import (
 	"github.com/dreadster3/pawcare/services/account/internal/owner/service"
 	"github.com/dreadster3/pawcare/shared/common"
 	"github.com/go-kit/kit/endpoint"
+	"github.com/go-kit/kit/transport/http"
 
 	"github.com/go-playground/validator/v10"
 )
@@ -18,31 +19,44 @@ type CreateRequest struct {
 }
 
 type CreateResponse struct {
+	common.EmbedError
+
 	Id   string `json:"id"`
 	Name string `json:"name"`
-	Err  error  `json:"-"`
 }
 
-func (r CreateResponse) Failed() error {
-	return r.Err
+func (r CreateResponse) StatusCode() int {
+	switch r.Err {
+	case domain.ErrOwnerAlreadyCreated:
+		return 409
+	case nil:
+		return 201
+	default:
+		return 500
+	}
 }
+
+var (
+	_ endpoint.Failer  = (*CreateResponse)(nil)
+	_ http.StatusCoder = (*CreateResponse)(nil)
+)
 
 func makeCreateEndpoint(ownerService service.IOwnerService) endpoint.Endpoint {
 	return func(context context.Context, request interface{}) (interface{}, error) {
 		req, ok := request.(CreateRequest)
 		if !ok {
-			return CreateResponse{Err: common.ErrCastRequest}, nil
+			return CreateResponse{EmbedError: common.NewEmbededError(common.ErrCastRequest)}, nil
 		}
 
 		err := validator.New().Struct(req)
 		if err != nil {
-			return CreateResponse{Err: err}, nil
+			return CreateResponse{EmbedError: common.NewEmbededError(err)}, nil
 		}
 
 		profile := domain.NewOwnerProfile(req.Name, req.DateOfBirth)
 		owner, err := ownerService.Create(context, profile)
 		if err != nil {
-			return CreateResponse{Err: err}, nil
+			return CreateResponse{EmbedError: common.NewEmbededError(err)}, nil
 		}
 
 		return CreateResponse{

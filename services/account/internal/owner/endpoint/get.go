@@ -4,26 +4,42 @@ import (
 	"context"
 	"time"
 
+	"github.com/dreadster3/pawcare/services/account/internal/owner/domain"
 	"github.com/dreadster3/pawcare/services/account/internal/owner/service"
+	"github.com/dreadster3/pawcare/shared/common"
 	"github.com/go-kit/kit/endpoint"
+	"github.com/go-kit/kit/transport/http"
 )
 
 type GetResponse struct {
+	common.EmbedError
+
 	Id          string    `json:"id"`
 	Name        string    `json:"name"`
 	DateOfBirth time.Time `json:"date_of_birth"`
-	Err         error     `json:"-"`
 }
 
-func (r GetResponse) Failed() error {
-	return r.Err
+func (r GetResponse) StatusCode() int {
+	switch r.Err {
+	case domain.ErrOwnerNotFound:
+		return 404
+	case nil:
+		return 200
+	default:
+		return 500
+	}
 }
+
+var (
+	_ endpoint.Failer  = (*GetResponse)(nil)
+	_ http.StatusCoder = (*GetResponse)(nil)
+)
 
 func makeGetEndpoint(ownerService service.IOwnerService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		owner, err := ownerService.Get(ctx)
 		if err != nil {
-			return GetResponse{Err: err}, nil
+			return GetResponse{EmbedError: common.NewEmbededError(err)}, nil
 		}
 
 		return GetResponse{

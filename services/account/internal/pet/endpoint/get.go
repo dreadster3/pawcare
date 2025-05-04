@@ -2,6 +2,7 @@ package endpoint
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/dreadster3/pawcare/services/account/internal/pet/domain"
@@ -9,23 +10,29 @@ import (
 	"github.com/dreadster3/pawcare/shared/common"
 	"github.com/dreadster3/pawcare/shared/utils"
 	"github.com/go-kit/kit/endpoint"
+	"github.com/go-kit/kit/transport/http"
 	"github.com/go-playground/validator/v10"
 )
 
 type GetManyResponse struct {
+	common.EmbedError
+
 	Pets []GetResponse `json:"pets"`
-	Err  error         `json:"-"`
 }
 
-func (r GetManyResponse) Failed() error {
-	return r.Err
+func (r GetManyResponse) StatusCode() int {
+	return 200
 }
+
+var _ http.StatusCoder = (*GetManyResponse)(nil)
 
 type GetByIdRequest struct {
-	Id string `json:"id" validate:"required"`
+	Id string `json:"id" validate:"required,mongodb"`
 }
 
 type GetResponse struct {
+	common.EmbedError
+
 	Id          string    `json:"id"`
 	Name        string    `json:"name"`
 	DateOfBirth time.Time `json:"date_of_birth"`
@@ -33,18 +40,31 @@ type GetResponse struct {
 	Breed       string    `json:"breed"`
 	Weight      float64   `json:"weight"`
 	Gender      string    `json:"gender"`
-	Err         error     `json:"-"`
 }
 
-func (r GetResponse) Failed() error {
-	return r.Err
+func (r GetResponse) StatusCode() int {
+	var validationError validator.ValidationErrors
+	if errors.As(r.Err, &validationError) {
+		return 400
+	}
+
+	switch r.Err {
+	case domain.ErrPetNotFound:
+		return 404
+	case nil:
+		return 200
+	default:
+		return 500
+	}
 }
+
+var _ http.StatusCoder = (*GetResponse)(nil)
 
 func makeGetAllEndpoint(petService service.IPetService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		pets, err := petService.GetAll(ctx)
 		if err != nil {
-			return GetManyResponse{Err: err}, nil
+			return GetManyResponse{EmbedError: common.NewEmbededError(err)}, nil
 		}
 
 		return GetManyResponse{
@@ -67,16 +87,16 @@ func makeGetByIdEndpoint(petService service.IPetService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		req, ok := request.(GetByIdRequest)
 		if !ok {
-			return GetResponse{Err: common.ErrCastRequest}, nil
+			return GetResponse{EmbedError: common.NewEmbededError(common.ErrCastRequest)}, nil
 		}
 
 		if err := validator.New().Struct(req); err != nil {
-			return GetResponse{Err: err}, nil
+			return GetResponse{EmbedError: common.NewEmbededError(err)}, nil
 		}
 
 		pet, err := petService.GetById(ctx, domain.PetId(req.Id))
 		if err != nil {
-			return GetResponse{Err: err}, nil
+			return GetResponse{EmbedError: common.NewEmbededError(err)}, nil
 		}
 
 		return GetResponse{

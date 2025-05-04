@@ -1,7 +1,12 @@
 {
   "version": 3,
   "timeout": "3s",
-  "output_encoding": "no-op",
+  "output_encoding": "json",
+  "extra_config": {
+    "router": {
+      "return_error_msg": true
+    }
+  },
   "endpoints": [
     {
       "endpoint": "/api/v1/owners",
@@ -10,7 +15,12 @@
         {
           "host": ["http://accounts"],
           "url_pattern": "/api/v1/owners",
-          "encoding": "json"
+          "encoding": "json",
+          "extra_config": {
+            "backend/http": {
+              "return_error_code": true
+            }
+          }
         }
       ],
       "extra_config": {
@@ -30,7 +40,12 @@
         {
           "host": ["http://accounts"],
           "url_pattern": "/api/v1/owners",
-          "encoding": "json"
+          "encoding": "json",
+          "extra_config": {
+            "backend/http": {
+              "return_error_code": true
+            }
+          }
         }
       ],
       "extra_config": {
@@ -45,12 +60,21 @@
     },
     {
       "endpoint": "/api/v1/pets",
+      "output_encoding": "json-collection",
       "method": "GET",
       "backend": [
         {
           "host": ["http://accounts"],
           "url_pattern": "/api/v1/pets",
-          "encoding": "json"
+          "encoding": "json",
+          "mapping": {
+            "pets": "collection"
+          },
+          "extra_config": {
+            "backend/http": {
+              "return_error_code": true
+            }
+          }
         }
       ],
       "extra_config": {
@@ -70,7 +94,12 @@
         {
           "host": ["http://accounts"],
           "url_pattern": "/api/v1/pets/{petId}",
-          "encoding": "json"
+          "encoding": "json",
+          "extra_config": {
+            "backend/http": {
+              "return_error_code": true
+            }
+          }
         }
       ],
       "extra_config": {
@@ -90,7 +119,12 @@
         {
           "host": ["http://accounts"],
           "url_pattern": "/api/v1/pets",
-          "encoding": "json"
+          "encoding": "json",
+          "extra_config": {
+            "backend/http": {
+              "return_error_code": true
+            }
+          }
         }
       ],
       "extra_config": {
@@ -110,7 +144,12 @@
         {
           "host": ["http://medical"],
           "url_pattern": "/api/v1/pets/{petId}/records",
-          "encoding": "json"
+          "encoding": "json",
+          "extra_config": {
+            "backend/http": {
+              "return_error_code": true
+            }
+          }
         }
       ],
       "extra_config": {
@@ -126,11 +165,20 @@
     {
       "endpoint": "/api/v1/pets/{petId}/records",
       "method": "GET",
+      "output_encoding": "json-collection",
       "backend": [
         {
           "host": ["http://medical"],
           "url_pattern": "/api/v1/pets/{petId}/records",
-          "encoding": "json"
+          "encoding": "json",
+          "mapping": {
+            "records": "collection"
+          },
+          "extra_config": {
+            "backend/http": {
+              "return_error_code": true
+            }
+          }
         }
       ],
       "extra_config": {
@@ -150,7 +198,12 @@
         {
           "host": ["http://medical"],
           "url_pattern": "/api/v1/records/{recordId}",
-          "encoding": "json"
+          "encoding": "json",
+          "extra_config": {
+            "backend/http": {
+              "return_error_code": true
+            }
+          }
         }
       ],
       "extra_config": {

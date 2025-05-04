@@ -1,8 +1,7 @@
-package watermill
+package router
 
 import (
-	"time"
-
+	"github.com/ThreeDotsLabs/watermill-kafka/v3/pkg/kafka"
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/ThreeDotsLabs/watermill/message/router/middleware"
 	"github.com/ThreeDotsLabs/watermill/message/router/plugin"
@@ -19,12 +18,26 @@ func NewDefaultRouter(logger *zap.Logger) (*message.Router, error) {
 	router.AddPlugin(plugin.SignalsHandler)
 	router.AddMiddleware(
 		middleware.CorrelationID,
-		middleware.Retry{
-			MaxRetries:      3,
-			InitialInterval: 50 * time.Millisecond,
-		}.Middleware,
 		middleware.Recoverer,
+		middleware.RandomFail(0.1),
+		middleware.RandomPanic(0.1),
 	)
 
 	return router, nil
+}
+
+func generatePartitionKey(topic string, msg *message.Message) (string, error) {
+	if key, ok := msg.Metadata["key"]; ok {
+		return key, nil
+	}
+
+	if key, ok := msg.Context().Value("key").(string); ok {
+		return key, nil
+	}
+
+	return "", nil
+}
+
+func NewDefaultPartitionKeyMarshaler() kafka.Marshaler {
+	return kafka.NewWithPartitioningMarshaler(generatePartitionKey)
 }

@@ -12,6 +12,7 @@ import (
 	kittransport "github.com/go-kit/kit/transport"
 	grpctransport "github.com/go-kit/kit/transport/grpc"
 	httptransport "github.com/go-kit/kit/transport/http"
+	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -52,8 +53,7 @@ func KafkaDecodeJSONMessage[T any](_ context.Context, msg *message.Message) (int
 
 func KafkaEncodeResponse(ctx context.Context, response interface{}) error {
 	if e, ok := response.(endpoint.Failer); ok && e.Failed() != nil {
-		// TODO: Change this
-		return nil
+		return e.Failed()
 	}
 	return nil
 }
@@ -69,6 +69,39 @@ func GRPCDecodeToObject[T any](_ context.Context, request interface{}) (interfac
 	}
 
 	return req, nil
+}
+
+// EncodeJSONResponse is a EncodeResponseFunc that serializes the response as a
+// JSON object to the ResponseWriter. Many JSON-over-HTTP services can use it as
+// a sensible default. If the response implements Headerer, the provided headers
+// will be applied to the response. If the response implements StatusCoder, the
+// provided StatusCode will be used instead of 200.
+func EncodeJSONResponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	if headerer, ok := response.(kithttp.Headerer); ok {
+		for k, values := range headerer.Headers() {
+			for _, v := range values {
+				w.Header().Add(k, v)
+			}
+		}
+	}
+	code := http.StatusOK
+	if sc, ok := response.(kithttp.StatusCoder); ok {
+		code = sc.StatusCode()
+	}
+	w.WriteHeader(code)
+	if code == http.StatusNoContent {
+		return nil
+	}
+
+	if failer, ok := response.(endpoint.Failer); ok {
+		if failer.Failed() != nil {
+			kithttp.DefaultErrorEncoder(ctx, failer.Failed(), w)
+			return nil
+		}
+	}
+
+	return json.NewEncoder(w).Encode(response)
 }
 
 func ErrorEncoder(err2Status func(error) int) func(_ context.Context, err error, w http.ResponseWriter) {

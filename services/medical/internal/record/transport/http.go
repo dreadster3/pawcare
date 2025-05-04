@@ -22,21 +22,21 @@ func RegisterHTTPRoutes(r *mux.Router, enpoints endpoint.Set, logger *zap.Logger
 	createHandler := kithttp.NewServer(
 		enpoints.CreateEndpoint,
 		common.DecodeJSONRequest[endpoint.CreateRequest],
-		kithttp.EncodeJSONResponse,
+		common.EncodeJSONResponse,
 		options...,
 	)
 
 	getByPetIdHandler := kithttp.NewServer(
 		enpoints.GetByPetIdEndpoint,
 		common.DecodePathParameters[endpoint.GetByIdRequest],
-		kithttp.EncodeJSONResponse,
+		common.EncodeJSONResponse,
 		options...,
 	)
 
 	getByIdHandler := kithttp.NewServer(
 		enpoints.GetByIdEndpoint,
 		common.DecodePathParameters[endpoint.GetByIdRequest],
-		kithttp.EncodeJSONResponse,
+		common.EncodeJSONResponse,
 		options...,
 	)
 

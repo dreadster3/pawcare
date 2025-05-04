@@ -24,17 +24,17 @@ func makePetCreateEndpoint(petService petservice.IPetService) endpoint.Endpoint 
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		req, ok := request.(CreateRequest)
 		if !ok {
-			return GetResponse{Err: common.ErrCastRequest}, nil
+			return GetResponse{EmbedError: common.NewEmbededError(common.ErrCastRequest)}, nil
 		}
 
 		if err := validator.New().Struct(req); err != nil {
-			return GetResponse{Err: err}, nil
+			return GetResponse{EmbedError: common.NewEmbededError(err)}, nil
 		}
 
 		profile := domain.NewPetProfile(req.Name, req.DateOfBirth, req.Species, req.Breed, req.Weight, domain.EGender(req.Gender))
 		pet, err := petService.Create(ctx, profile)
 		if err != nil {
-			return GetResponse{Err: err}, nil
+			return GetResponse{EmbedError: common.NewEmbededError(err)}, nil
 		}
 
 		return GetResponse{

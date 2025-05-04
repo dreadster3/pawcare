@@ -22,18 +22,18 @@ func makeCreateEndpoint(recordService service.IRecordService) endpoint.Endpoint 
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		req, ok := request.(CreateRequest)
 		if !ok {
-			return GetResponse{Err: common.ErrCastRequest}, nil
+			return GetResponse{EmbedError: common.NewEmbededError(common.ErrCastRequest)}, nil
 		}
 
 		if err := validator.New().Struct(req); err != nil {
-			return GetResponse{Err: err}, nil
+			return GetResponse{EmbedError: common.NewEmbededError(err)}, nil
 		}
 
 		petId := domain.PetId(req.PetId)
 		recordInfo := domain.NewRecordInfo(domain.RecordType(req.Type), req.Description, req.Date)
 		record, err := recordService.Create(ctx, petId, recordInfo)
 		if err != nil {
-			return GetResponse{Err: err}, nil
+			return GetResponse{EmbedError: common.NewEmbededError(err)}, nil
 		}
 
 		return GetResponse{
